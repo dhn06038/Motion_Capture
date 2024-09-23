@@ -1,5 +1,5 @@
 import cv2
-from cvzone.FaceMeshModule import FaceMeshDetector
+from cvzone.PoseModule import PoseDetector
 import socket
 
 # Parameters
@@ -12,7 +12,7 @@ cap.set(3, width)
 cap.set(4, height)
 
 # Detect pose
-detector = FaceMeshDetector()
+detector = PoseDetector()
 
 # Network
 sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
@@ -24,18 +24,19 @@ while True:
     success, img = cap.read()
 
 # bbox
-    img, faces = detector.findFaceMesh(img)
+    img = detector.findPose(img)
+    lmList, bboxInfo = detector.findPosition(img)
 
     data = []
 
     # send landmark data
-    if faces:
-        for face in faces[0]:
-            data.extend([face[0], height - face[1], face[2]])
+    if bboxInfo:
+        for lm in lmList:
+            data.extend([lm[0], height - lm[1], lm[2]])
         sock.sendto(str.encode(str(data)), serverAddressPort)
 
     img = cv2.resize(img, (0, 0), None, 0.5, 0.5)
     cv2.imshow("Image", img)
 
-    if cv2.waitKey(1) == ord("q"): # q 누를 시 웹켐 종료
+    if cv2.waitKey(1) == ord("q"):
         break

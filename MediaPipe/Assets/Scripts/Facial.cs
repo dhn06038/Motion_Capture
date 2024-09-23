@@ -7,6 +7,10 @@ public class Facial : MonoBehaviour
     // Start is called before the first frame update
     public UDPReceive udpReceive;
     public GameObject[] landMarks;
+    public float distance;
+    public GameObject[] spinningCubes;
+
+    float rotSpeed;
     void Start()
     {
 
@@ -27,14 +31,21 @@ public class Facial : MonoBehaviour
 
         for (int i = 0; i < 468; i++)
         {
-
             float x = 7 - float.Parse(points[i * 3]) / 100;
             float y = float.Parse(points[i * 3 + 1]) / 100;
             float z = float.Parse(points[i * 3 + 2]) / 100;
 
             landMarks[i].transform.localPosition = new Vector3(x, y, z);
         }
+        Vector3 i_11 = new Vector3(7 - float.Parse(points[11 * 3]) / 100, float.Parse(points[11 * 3 + 1]) / 100, float.Parse(points[11 * 3 + 2]) / 100);
+        Vector3 i_14 = new Vector3(7 - float.Parse(points[14 * 3]) / 100, float.Parse(points[14 * 3 + 1]) / 100, float.Parse(points[14 * 3 + 2]) / 100);
 
+        distance = Vector3.Distance(i_11, i_14);
+        rotSpeed += Time.deltaTime * 100f;
 
+        foreach (GameObject cube in spinningCubes)
+        {
+            cube.transform.rotation = Quaternion.Euler(0f, rotSpeed * distance, 0f);
+        }
     }
 }
