@@ -28,6 +28,8 @@ while True:
 
     data = []
 
+    print(faces)
+
     # send landmark data
     if faces:
         for face in faces[0]:
