@@ -46,7 +46,7 @@ while True:
             data.extend([face[0], height - face[1], face[2]])
         sock.sendto(str.encode(str(data)), serverAddressPort2)
 
-    img = cv2.resize(poseImg + faceImg, (0, 0), None, 0.5, 0.5)
+    img = cv2.resize((poseImg + faceImg), (0, 0), None, 0.5, 0.5)
     cv2.imshow("Image", img)
 
     if cv2.waitKey(1) == ord("q"):
