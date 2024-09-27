@@ -158,6 +158,7 @@ while True:
             else:
                 myHand["type"] = handType.classification[0].label
             allHands.append(myHand)
+            print(allHands)
 
             ## draw
             if draw:
@@ -185,11 +186,19 @@ while True:
         sock.sendto(str.encode(str(face_data)), serverAddressPort2)
 
     if allHands:
-        hand = allHands[0]
-        hands_lmList = hand['lmList']
+        hand1 = allHands[0]
+        hand1_lmList = hand1['lmList']
 
-        for lm in hands_lmList:
+        for lm in hand1_lmList:
             hands_data.extend([lm[0], height - lm[1], lm[2]])
+
+        if len(allHands) == 2:
+            hand2 = allHands[1]
+            hand2_lmList = hand2['lmList']
+
+            for lm in hand2_lmList:
+                hands_data.extend([lm[0], height - lm[1], lm[2]])
+
         sock.sendto(str.encode(str(hands_data)), serverAddressPort3)
 
     img = cv2.resize(img, (0, 0), None, 0.5, 0.5)

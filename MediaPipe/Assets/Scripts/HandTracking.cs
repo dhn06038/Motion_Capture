@@ -26,7 +26,7 @@ public class HandTracking : MonoBehaviour
         //0        1*3      2*3
         //x1,y1,z1,x2,y2,z2,x3,y3,z3
 
-        for (int i = 0; i < 21; i++)
+        for (int i = 0; i < 42; i++)
         {
 
             float x = 7 - float.Parse(points[i * 3]) / 100;
