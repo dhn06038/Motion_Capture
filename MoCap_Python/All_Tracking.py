@@ -192,7 +192,7 @@ while True:
         for lm in hand1_lmList:
             hands_data.extend([lm[0], height - lm[1], lm[2]])
 
-        if len(allHands) == 2:
+        if (len(allHands) == 2) and (allHands[0]['type'] != allHands[1]['type']):
             hand2 = allHands[1]
             hand2_lmList = hand2['lmList']
 

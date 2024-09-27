@@ -2766,10 +2766,9 @@ GameObject:
   - component: {fileID: 53568504}
   - component: {fileID: 53568503}
   - component: {fileID: 53568502}
-  - component: {fileID: 53568501}
   m_Layer: 0
   m_Name: Point (23)
-  m_TagString: Leg
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2789,33 +2788,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1741069036}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &53568501
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 53568499}
-  serializedVersion: 4
-  m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
 --- !u!135 &53568502
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -45343,10 +45315,9 @@ GameObject:
   - component: {fileID: 959711275}
   - component: {fileID: 959711274}
   - component: {fileID: 959711273}
-  - component: {fileID: 959711272}
   m_Layer: 0
   m_Name: Point (8)
-  m_TagString: Finger
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -45366,33 +45337,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1048248466}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &959711272
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 959711270}
-  serializedVersion: 4
-  m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
 --- !u!135 &959711273
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -90332,10 +90276,9 @@ GameObject:
   - component: {fileID: 1838106132}
   - component: {fileID: 1838106131}
   - component: {fileID: 1838106130}
-  - component: {fileID: 1838106129}
   m_Layer: 0
   m_Name: Point (8)
-  m_TagString: Finger
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -90355,33 +90298,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 138909466}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &1838106129
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1838106127}
-  serializedVersion: 4
-  m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
 --- !u!135 &1838106130
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -104668,10 +104584,9 @@ GameObject:
   - component: {fileID: 2132819815}
   - component: {fileID: 2132819814}
   - component: {fileID: 2132819813}
-  - component: {fileID: 2132819812}
   m_Layer: 0
   m_Name: Point (24)
-  m_TagString: Leg
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -104691,33 +104606,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1741069036}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &2132819812
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2132819810}
-  serializedVersion: 4
-  m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
 --- !u!135 &2132819813
 SphereCollider:
   m_ObjectHideFlags: 0
