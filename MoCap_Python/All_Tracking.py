@@ -8,7 +8,7 @@ import mediapipe as mp
 width, height = 1280, 720
 
 # WebCam's IP
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture("Green Screen _ Chroma Key _ smiling young woman in formal wear talking and gesturing _ 4K _ HD - Royalty Free Music Video & Template (1080p, h264, youtube).mp4")
 
 cap.set(3, width)
 cap.set(4, height)
