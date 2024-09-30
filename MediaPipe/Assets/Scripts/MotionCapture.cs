@@ -7,6 +7,8 @@ public class MotionCapture : MonoBehaviour
     // Start is called before the first frame update
     public UDPReceive udpReceive;
     public GameObject[] landMarks;
+
+    public static Vector3[] poseLandmarks;
     void Start()
     {
 
@@ -32,9 +34,14 @@ public class MotionCapture : MonoBehaviour
             float y = float.Parse(points[i * 3 + 1]) / 100;
             float z = float.Parse(points[i * 3 + 2]) / 100;
 
+            poseLandmarks[i] = new Vector3 (x, y, z);
+
             landMarks[i].transform.localPosition = new Vector3(x, y, z);
         }
+    }
 
-
+    public Vector3[] getPoseLandmarks()
+    {
+        return poseLandmarks;
     }
 }
