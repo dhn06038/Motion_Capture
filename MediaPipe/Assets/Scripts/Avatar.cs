@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class Avatar : MonoBehaviour
 {
+    public Animator animator;
+    public LayerMask ground;
+    public bool footTracking = true;
+    public float footGroundOffset = .1f;
     // Start is called before the first frame update
     void Start()
     {
