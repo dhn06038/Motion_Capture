@@ -7,13 +7,12 @@ public class MotionCaptureAvatar : MonoBehaviour
 {
     // Start is called before the first frame update
     public UDPReceive udpReceive;
-    public GameObject[] landMarks;
 
     float scale_ratio = 0.001f;
     float heal_position = 0.05f; 
     float head_angle = 15f;
 
-    Vector3[] poseLandmarks;
+    Vector3[] poseLandmarks = new Vector3[33];
 
     Animator anim;
     float play_time;
@@ -25,7 +24,7 @@ public class MotionCaptureAvatar : MonoBehaviour
     Quaternion[] init_rot;
     Quaternion[] init_inv;
 
-    Vector3[] now_pos;
+    Vector3[] now_pos = new Vector3[17];
 
     int[] bones = new int[10] { 1, 2, 4, 5, 7, 8, 11, 12, 14, 15 };
     int[] child_bones = new int[10] { 2, 3, 5, 6, 8, 10, 12, 13, 15, 16 };
@@ -59,6 +58,7 @@ public class MotionCaptureAvatar : MonoBehaviour
         bone_t[15] = anim.GetBoneTransform(HumanBodyBones.RightLowerArm);
         bone_t[16] = anim.GetBoneTransform(HumanBodyBones.RightHand);
 
+        print(bone_t[0]);
         Vector3 init_forward = TriangleNormal(bone_t[7].position, bone_t[4].position, bone_t[1].position);
         init_inv[0] = Quaternion.Inverse(Quaternion.LookRotation(init_forward));
 
@@ -93,7 +93,6 @@ public class MotionCaptureAvatar : MonoBehaviour
         data = data.Remove(data.Length - 1, 1);
 
         string[] points = data.Split(',');
-        print(points[0]);
 
         //0        1*3      2*3
         //x1,y1,z1,x2,y2,z2,x3,y3,z3
@@ -103,11 +102,10 @@ public class MotionCaptureAvatar : MonoBehaviour
 
             float x = 7 - float.Parse(points[i * 3]) / 100;
             float y = float.Parse(points[i * 3 + 1]) / 100;
-            float z = float.Parse(points[i * 3 + 2]) / 100;
+            float z = -float.Parse(points[i * 3 + 2]) / 100;
 
             poseLandmarks[i] = new Vector3(x, y, z);
-
-            landMarks[i].transform.localPosition = new Vector3(x, y, z);
+            print(poseLandmarks[i]);
         }
 
 
