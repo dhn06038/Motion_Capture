@@ -1,243 +1,153 @@
-// Copyright (c) 2023 homuler
+// Copyright (c) 2021 homuler
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT.
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Mediapipe.Unity
 {
-  public sealed class OutputStream<T> : IDisposable
+  public class OutputEventArgs<TValue> : EventArgs
   {
-    public readonly struct OutputEventArgs
+    public readonly TValue value;
+
+    public OutputEventArgs(TValue value)
     {
-      /// <summary>
-      ///   <see cref="Packet"/> that contains the output value.
-      ///   As long as it's not <see langword="null"/>, it's guaranteed that <see cref="Packet.IsEmpty"/> is <see langword="false"/>.
-      /// </summary>
-      public readonly Packet<T> packet;
-      public readonly long timestampMicrosecond;
-
-      internal OutputEventArgs(Packet<T> packet, long timestampMicrosecond)
-      {
-        this.packet = packet;
-        this.timestampMicrosecond = timestampMicrosecond;
-      }
+      this.value = value;
     }
+  }
 
-    public readonly struct NextResult
-    {
-      /// <summary>
-      ///   <see cref="Packet"/> that contains the output value.
-      ///   As long as it's not <see langword="null"/>, it's guaranteed that <see cref="Packet.IsEmpty"/> is <see langword="false"/>.
-      /// </summary>
-      public readonly Packet<T> packet;
-      /// <summary>
-      ///   <see langword="true"/> if the next packet is retrieved successfully; otherwise <see langword="false"/>.
-      /// </summary>
-      public readonly bool ok;
-
-      public NextResult(Packet<T> packet, bool ok)
-      {
-        this.packet = packet;
-        this.ok = ok;
-      }
-    }
-
+  public class OutputStream<TPacket, TValue> where TPacket : Packet<TValue>, new()
+  {
     private static int _Counter = 0;
-    private static readonly GlobalInstanceTable<int, OutputStream<T>> _InstanceTable = new GlobalInstanceTable<int, OutputStream<T>>(20);
+    private static readonly GlobalInstanceTable<int, OutputStream<TPacket, TValue>> _InstanceTable = new GlobalInstanceTable<int, OutputStream<TPacket, TValue>>(20);
 
-    private CalculatorGraph _calculatorGraph;
+    protected readonly CalculatorGraph calculatorGraph;
 
     private readonly int _id;
     public readonly string streamName;
+    public readonly string presenceStreamName;
     public readonly bool observeTimestampBounds;
 
-    private OutputStreamPoller<T> _poller;
-    private Packet<T> _outputPacket;
-    private Packet<T> outputPacket
+    private OutputStreamPoller<TValue> _poller;
+    private TPacket _outputPacket;
+
+    private OutputStreamPoller<bool> _presencePoller;
+    private BoolPacket _presencePacket;
+
+    private long _lastTimestampMicrosec;
+    private long _timeoutMicrosec;
+    public long timeoutMicrosec
     {
-      get
-      {
-        if (_outputPacket == null)
-        {
-          _outputPacket = new Packet<T>();
-          _outputPacket.Lock();
-        }
-        return _outputPacket;
-      }
+      get => _timeoutMicrosec;
+      set => _timeoutMicrosec = Math.Max(0, value);
     }
 
-    private readonly ReaderWriterLockSlim _waitTaskLock = new ReaderWriterLockSlim();
-    /// <remarks>
-    ///   Only the <see cref="_waitTask"/> can modify <see cref="_outputPacket"/>.
-    /// </remarks>
-    private Task<NextResult> _waitTask;
+    protected event EventHandler<OutputEventArgs<TValue>> OnReceived;
 
-    private event EventHandler<OutputEventArgs> OnReceived;
-    private long _lastTimestampMicrosec;
-
-    private Packet<T> _referencePacket;
-    private Packet<T> referencePacket
+    private TPacket _referencePacket;
+    protected TPacket referencePacket
     {
       get
       {
         if (_referencePacket == null)
         {
-          _referencePacket = Packet<T>.CreateForReference(IntPtr.Zero);
-          _referencePacket.Lock();
+          _referencePacket = Packet<TValue>.Create<TPacket>(IntPtr.Zero, false);
         }
         return _referencePacket;
       }
     }
 
-    private volatile int _disposeSignaled = 0;
-    private bool _isDisposed;
+    protected bool canTestPresence => presenceStreamName != null;
 
     /// <summary>
     ///  Initialize a new instance of the <see cref="OutputStream" /> class.
     /// </summary>
     /// <remarks>
-    ///   When <paramref name="observeTimestampBounds" /> is set to <see langword="false"/>, while there's not output present in the stream,
-    ///   <list type="bullet">
-    ///     <item>
-    ///       <description>
-    ///         <see cref="WaitNextAsync"/> won't return the result.
-    ///       </description>
-    ///     </item>
-    ///     <item>
-    ///       <description>
-    ///         Callbacks, which can be registered by <see cref="AddListener"/>, won't be called.
-    ///       </description>
-    ///     </item>
-    ///   </list>
+    ///   If <paramref name="observeTimestampBounds" /> is set to <c>false</c>, there are no ways to know whether the output is present or not.<br/>
+    ///   This can be especially problematic <br/>
+    ///      - when trying to get the output synchronously, because the thread will hang forever if no value is output.<br />
+    ///      - when trying to get the output using callbacks, because they won't be called while no value is output.<br />
     /// </remarks>
     /// <param name="calculatorGraph">The owner of the stream</param>
     /// <param name="streamName">The name of the stream</param>
     /// <param name="observeTimestampBounds">
-    ///   This parameter controlls the behaviour when there's no output.<br/>
-    ///   If it's set to <see langword="true"/>, the stream outputs an empty packet when there's not output,
-    ///   but if it's <see langword="false"/>, the stream does not output packets.
+    ///   This parameter controlls the behaviour when no output is present. <br/>
+    ///   When no output is present, if it's set to <c>true</c>, the stream outputs an empty packet, but if it's <c>false</c>, the stream does not output packets.
     /// </param>
-    public OutputStream(CalculatorGraph calculatorGraph, string streamName, bool observeTimestampBounds = true)
+    /// <param name="timeoutMicrosec">
+    ///   If the output packet is empty, the <see cref="OutputStream" /> instance drops the packet until the period specified here elapses.
+    /// </param>
+    public OutputStream(CalculatorGraph calculatorGraph, string streamName, bool observeTimestampBounds = true, long timeoutMicrosec = 0)
     {
-      _id = Interlocked.Increment(ref _Counter);
-      _calculatorGraph = calculatorGraph;
+      _id = System.Threading.Interlocked.Increment(ref _Counter);
+      this.calculatorGraph = calculatorGraph;
       this.streamName = streamName;
       this.observeTimestampBounds = observeTimestampBounds;
+      this.timeoutMicrosec = timeoutMicrosec;
 
       _InstanceTable.Add(_id, this);
     }
 
-    public void Dispose()
-    {
-      Dispose(true);
-      GC.SuppressFinalize(this);
-    }
-
-    private void Dispose(bool disposing)
-    {
-      if (Interlocked.Exchange(ref _disposeSignaled, 1) != 0)
-      {
-        return;
-      }
-
-      _isDisposed = true;
-
-      if (disposing)
-      {
-        DisposeManaged();
-      }
-      DisposeUnmanaged();
-    }
-
-    private void DisposeManaged()
-    {
-      OnReceived = null;
-      _ = _InstanceTable.Remove(_id);
-    }
-
-    private void DisposeUnmanaged()
-    {
-      // _calculatorGraph is not managed by this class.
-      _calculatorGraph = null;
-
-      _poller?.Dispose();
-      _poller = null;
-
-      if (_outputPacket != null)
-      {
-        _outputPacket.Unlock();
-        _outputPacket.Dispose();
-        _outputPacket = null;
-      }
-
-      if (_referencePacket != null)
-      {
-        _referencePacket.Unlock();
-        _referencePacket.Dispose();
-        _referencePacket = null;
-      }
-    }
-
-    ~OutputStream()
-    {
-      Dispose(false);
-    }
-
-    public void StartPolling()
-    {
-      ThrowIfDisposed();
-
-      _poller = _calculatorGraph.AddOutputStreamPoller<T>(streamName, observeTimestampBounds);
-    }
-
     /// <summary>
+    ///   Initialize a new instance of the <see cref="OutputStream" /> class.<br />
+    ///   It's necessary for the graph to have <c>PacketPresenceCalculator</c> node that calculates if the stream has output or not.
     /// </summary>
     /// <remarks>
-    ///   When <see cref="observeTimestampBounds" /> is set to <see langword="true"/>, <see cref="callback"/> can be invoked with an empty packet.
-    ///   However, in some cases, most of the output packets can be empty even if the output must be present.<br/>
-    ///   In that case, specify <paramref name="emptyPacketThresholdMicrosecond" /> to mitigate the problem.
+    ///   This is useful when you want to get the output synchronously but don't want to block the thread while waiting for the output.
     /// </remarks>
-    /// <param name="callback"></param>
-    /// <param name="emptyPacketThresholdMicrosecond">
-    ///   When <see cref="observeTimestampBounds" /> is set to <see langword="true"/>, <see cref="callback"/> can be invoked with an empty packet.
-    ///   However, in some cases, most of the output packets can be empty even if the output must be present.<br/>
-    ///
-    ///   This parameter specifies the duration for ignoring empty packets.
-    ///   That is, when receiving an empty packet, <paramref name="callback"/> will not be invoked
-    ///   unless the specified time has elapsed since the last non-empty output was received.
+    /// <param name="calculatorGraph">The owner of the stream</param>
+    /// <param name="streamName">The name of the stream</param>
+    /// <param name="presenceStreamName">
+    ///   The name of the stream that outputs true iff the output is present.
     /// </param>
-    public void AddListener(EventHandler<OutputEventArgs> callback, long emptyPacketThresholdMicrosecond = 0)
+    /// <param name="timeoutMicrosec">
+    ///   If the output packet is empty, the <see cref="OutputStream" /> instance drops the packet until the period specified here elapses.
+    /// </param>
+    public OutputStream(CalculatorGraph calculatorGraph, string streamName, string presenceStreamName, long timeoutMicrosec = 0) : this(calculatorGraph, streamName, false, timeoutMicrosec)
     {
-      ThrowIfDisposed();
-
-      if (OnReceived == null)
-      {
-        _calculatorGraph.ObserveOutputStream(streamName, _id, InvokeIfOutputStreamFound, observeTimestampBounds);
-      }
-
-      if (emptyPacketThresholdMicrosecond <= 0)
-      {
-        OnReceived += callback;
-        return;
-      }
-
-      OnReceived += (sender, eventArgs) =>
-      {
-        var stream = (OutputStream<T>)sender;
-        if (eventArgs.packet == null && eventArgs.timestampMicrosecond - stream._lastTimestampMicrosec <= emptyPacketThresholdMicrosecond)
-        {
-          return;
-        }
-        callback(stream, eventArgs);
-      };
+      this.presenceStreamName = presenceStreamName;
     }
 
-    public void RemoveListener(EventHandler<OutputEventArgs> eventHandler)
+    public Status StartPolling()
+    {
+      _outputPacket = new TPacket();
+
+      var statusOrPoller = calculatorGraph.AddOutputStreamPoller<TValue>(streamName, observeTimestampBounds);
+      var status = statusOrPoller.status;
+      if (status.Ok())
+      {
+        _poller = statusOrPoller.Value();
+      }
+
+      if (presenceStreamName == null)
+      {
+        return status;
+      }
+
+      _presencePacket = new BoolPacket();
+
+      var statusOrPresencePoller = calculatorGraph.AddOutputStreamPoller<bool>(presenceStreamName, false);
+      status = statusOrPresencePoller.status;
+      if (status.Ok())
+      {
+        _presencePoller = statusOrPresencePoller.Value();
+      }
+      return status;
+    }
+
+    public void AddListener(EventHandler<OutputEventArgs<TValue>> callback)
+    {
+      if (OnReceived == null)
+      {
+        calculatorGraph.ObserveOutputStream(streamName, _id, InvokeIfOutputStreamFound, observeTimestampBounds).AssertOk();
+      }
+      OnReceived += callback;
+    }
+
+    public void RemoveListener(EventHandler<OutputEventArgs<TValue>> eventHandler)
     {
       OnReceived -= eventHandler;
     }
@@ -247,174 +157,257 @@ namespace Mediapipe.Unity
       OnReceived = null;
     }
 
-    /// <summary>
-    ///   Wait the next packet from the stream.
-    /// </summary>
-    /// <remarks>
-    ///   Only if <see cref="observeTimestampBounds" /> is set to true, MediaPipe outputs an empty packet when no output is present.
-    /// </remarks>
-    public async Task<NextResult> WaitNextAsync()
+    public void Close()
     {
-      ThrowIfDisposed();
+      RemoveAllListeners();
 
-      try
-      {
-        var result = await WaitNextInternal().ConfigureAwait(false);
-        return result;
-      }
-      finally
-      {
-        ClearWaitTask();
-      }
+      _poller?.Dispose();
+      _poller = null;
+      _outputPacket?.Dispose();
+      _outputPacket = null;
+
+      _presencePoller?.Dispose();
+      _presencePoller = null;
+      _presencePacket?.Dispose();
+      _presencePacket = null;
+
+      _referencePacket?.Dispose();
+      _referencePacket = null;
     }
 
     /// <summary>
-    ///   Wait the next packet from the stream.
+    ///   Gets the next value from the stream.
+    ///   This method drops a packet whose timestamp is less than <paramref name="timestampThreshold" />.
     /// </summary>
     /// <remarks>
-    ///   Only if <see cref="observeTimestampBounds" /> is set to true, MediaPipe outputs an empty packet when no output is present.
+    ///   <para>
+    ///     If <see cref="observeTimestampBounds" /> is set to true, MediaPipe outputs an empty packet when no output is present, but this method ignores those packets.
+    ///     This behavior is useful to avoid outputting an empty value when the detection fails for a particular frame.
+    ///   </para>
+    ///   <para>
+    ///     When <paramref name="value" /> is set to the default value, you cannot tell whether it's because the output was empty or not.
+    ///   </para>
     /// </remarks>
-    public async Task<NextResult> WaitNextAsync(CancellationToken cancellationToken)
+    /// <param name="value">
+    ///   When this method returns, it contains the next output value if it's present and retrieved successfully; otherwise, the default value for the type of the value parameter.
+    ///   This parameter is passed uninitialized.
+    /// </param>
+    /// <param name="timestampThreshold">
+    ///   Drops outputs whose timestamp is less than this value.
+    /// </param>
+    /// <param name="allowBlock">
+    ///   If <c>true</c>, this method can block the thread until the value is retrieved.<br />
+    ///   It can be set to <c>false</c> only if <see cref="presenceStreamName" /> is set.
+    /// </param>
+    /// <returns>
+    ///   <c>true</c> if <paramref name="value" /> is successfully retrieved; otherwise <c>false</c>.
+    /// </returns>
+    public bool TryGetNext(out TValue value, long timestampThreshold, bool allowBlock = true)
     {
-      ThrowIfDisposed();
+      var timestampMicrosec = long.MinValue;
 
-      var waitTask = WaitNextInternal();
-      try
+      while (timestampMicrosec < timestampThreshold)
       {
-        var result = await waitTask.WaitAsync(cancellationToken).ConfigureAwait(false);
-        ClearWaitTask();
-        return result;
+        if (!CanCallNext(allowBlock) || !Next())
+        {
+          value = default;
+          return false;
+        }
+        using (var timestamp = _outputPacket.Timestamp())
+        {
+          timestampMicrosec = timestamp.Microseconds();
+        }
       }
-      catch (OperationCanceledException)
+
+      if (_outputPacket.IsEmpty())
       {
-        throw;
+        value = default; // TODO: distinguish when the output is empty and when it's not (retrieved value can be the default value).
+        return false;
       }
-      catch (Exception)
-      {
-        ClearWaitTask();
-        throw;
-      }
+
+      _lastTimestampMicrosec = timestampMicrosec;
+      value = _outputPacket.Get();
+      return true;
     }
 
-    private Task<NextResult> WaitNextInternal()
+    public bool TryGetNext(out TValue value, bool allowBlock = true)
     {
-      ThrowIfDisposed();
-
-      _waitTaskLock.EnterUpgradeableReadLock();
-      try
-      {
-        if (_waitTask != null)
-        {
-          return _waitTask;
-        }
-
-        _waitTaskLock.EnterWriteLock();
-        try
-        {
-          _waitTask = StartWaitNextTask();
-          return _waitTask;
-        }
-        finally
-        {
-          _waitTaskLock.ExitWriteLock();
-        }
-      }
-      finally
-      {
-        _waitTaskLock.ExitUpgradeableReadLock();
-      }
+      return TryGetNext(out value, 0, allowBlock);
     }
 
-    private Task<NextResult> StartWaitNextTask()
+    public bool TryConsumeNext(out TValue value, long timestampThreshold, bool allowBlock = true)
+    {
+      long timestampMicrosec = 0;
+
+      while (timestampMicrosec <= timestampThreshold)
+      {
+        if (!CanCallNext(allowBlock) || !Next())
+        {
+          value = default;
+          return true;
+        }
+        using (var timestamp = _outputPacket.Timestamp())
+        {
+          timestampMicrosec = timestamp.Microseconds();
+        }
+      }
+
+      if (_outputPacket.IsEmpty())
+      {
+        value = default; // TODO: distinguish when the output is empty and when it's not (retrieved value can be the default value).
+        return false;
+      }
+
+      _lastTimestampMicrosec = timestampMicrosec;
+      var statusOrValue = _outputPacket.Consume();
+
+      value = statusOrValue.ValueOr();
+      return true;
+    }
+
+    public bool TryConsumeNext(out TValue value, bool allowBlock = true)
+    {
+      return TryConsumeNext(out value, 0, allowBlock);
+    }
+
+    public bool ResetTimestampIfTimedOut(long timestampMicrosec, long timeoutMicrosec)
+    {
+      if (timestampMicrosec - _lastTimestampMicrosec <= timeoutMicrosec)
+      {
+        return false;
+      }
+      _lastTimestampMicrosec = timestampMicrosec;
+      return true;
+    }
+
+    protected bool CanCallNext(bool allowBlock)
     {
       if (_poller == null)
       {
-        throw new InvalidOperationException("OutputStreamPoller is not initialized. Call StartPolling before running the CalculatorGraph");
+        Logger.LogWarning("OutputStreamPoller is not initialized. Call StartPolling before running the CalculatorGraph");
+        return false;
       }
 
-      return Task<NextResult>.Factory.StartNew((state) =>
+      if (canTestPresence)
       {
-        var stream = (OutputStream<T>)state;
-        if (stream.Next(out var packet)) // this blocks the thread
+        if (!allowBlock)
         {
-          if (packet.IsEmpty())
+          if (_presencePoller.QueueSize() <= 0)
           {
-            return new NextResult(null, true);
+            return false;
           }
-          return new NextResult(packet, true);
         }
-        return new NextResult(null, false);
-      }, this);
-    }
-
-    private bool Next(out Packet<T> packet)
-    {
-      var result = _poller.Next(outputPacket);
-      packet = outputPacket;
-      return result;
-    }
-
-    /// <remarks>
-    ///   This method will aquire the write lock of <see cref="_waitTaskLock" />.
-    /// </remarks>
-    private void ClearWaitTask()
-    {
-      _waitTaskLock.EnterWriteLock();
-      try
-      {
-        _waitTask = null;
+        if (!NextPresence() || !_presencePacket.Get())
+        {
+          // NOTE: _presencePacket.IsEmpty() always returns false
+          return false;
+        }
       }
-      finally
+      else if (!allowBlock)
       {
-        _waitTaskLock.ExitWriteLock();
+        Logger.LogWarning("Cannot avoid thread being blocked when `presenceStreamName` is not set");
+        return false;
+      }
+      return true;
+    }
+
+    protected bool NextPresence()
+    {
+      return Next(_presencePoller, _presencePacket, presenceStreamName);
+    }
+
+    protected bool Next()
+    {
+      return Next(_poller, _outputPacket, streamName);
+    }
+
+    protected static bool Next<T>(OutputStreamPoller<T> poller, Packet<T> packet, string stream)
+    {
+      if (!poller.Next(packet))
+      {
+        Logger.LogWarning($"Failed to get next value from {stream}. See logs for more details");
+        return false;
+      }
+      return true;
+    }
+
+    protected bool TryGetPacketValue(Packet<TValue> packet, out TValue value, long timeoutMicrosec = 0)
+    {
+      using (var timestamp = packet.Timestamp())
+      {
+        var currentMicrosec = timestamp.Microseconds();
+
+        if (!packet.IsEmpty())
+        {
+          _lastTimestampMicrosec = currentMicrosec;
+          value = packet.Get();
+          return true;
+        }
+
+        value = default; // TODO: distinguish when the output is empty and when it's not (retrieved value can be the default value).
+        var hasTimedOut = currentMicrosec - _lastTimestampMicrosec >= timeoutMicrosec;
+
+        if (hasTimedOut)
+        {
+          _lastTimestampMicrosec = currentMicrosec;
+        }
+        return hasTimedOut;
       }
     }
 
-    private void InvokeOnReceived(Packet<T> nextPacket)
+    protected bool TryConsumePacketValue(Packet<TValue> packet, out TValue value, long timeoutMicrosec = 0)
     {
-      var isEmpty = nextPacket.IsEmpty();
-      var timestampMicrosec = nextPacket.TimestampMicroseconds();
-      if (!isEmpty)
+      using (var timestamp = packet.Timestamp())
       {
-        // not thread-safe
-        _lastTimestampMicrosec = Math.Max(timestampMicrosec, _lastTimestampMicrosec);
-      }
-      OnReceived?.Invoke(this, new OutputEventArgs(isEmpty ? null : nextPacket, timestampMicrosec));
-    }
+        var currentMicrosec = timestamp.Microseconds();
 
-    private void ThrowIfDisposed()
-    {
-      if (_isDisposed)
-      {
-        throw new ObjectDisposedException(GetType().FullName);
+        if (!packet.IsEmpty())
+        {
+          _lastTimestampMicrosec = currentMicrosec;
+          var statusOrValue = packet.Consume();
+
+          value = statusOrValue.ValueOr();
+          return true;
+        }
+
+        value = default; // TODO: distinguish when the output is empty and when it's not (retrieved value can be the default value).
+        var hasTimedOut = currentMicrosec - _lastTimestampMicrosec >= timeoutMicrosec;
+
+        if (hasTimedOut)
+        {
+          _lastTimestampMicrosec = currentMicrosec;
+        }
+        return hasTimedOut;
       }
     }
 
     [AOT.MonoPInvokeCallback(typeof(CalculatorGraph.NativePacketCallback))]
-    private static StatusArgs InvokeIfOutputStreamFound(IntPtr graphPtr, int streamId, IntPtr packetPtr)
+    protected static Status.StatusArgs InvokeIfOutputStreamFound(IntPtr graphPtr, int streamId, IntPtr packetPtr)
     {
       try
       {
         var isFound = _InstanceTable.TryGetValue(streamId, out var outputStream);
         if (!isFound)
         {
-          return StatusArgs.NotFound($"OutputStream with id {streamId} is not found, maybe already GCed");
+          return Status.StatusArgs.NotFound($"OutputStream with id {streamId} is not found, maybe already GCed");
         }
-        if (outputStream._calculatorGraph.mpPtr != graphPtr)
+        if (outputStream.calculatorGraph.mpPtr != graphPtr)
         {
-          return StatusArgs.InvalidArgument($"OutputStream is found, but is not linked to the specified CalclatorGraph");
+          return Status.StatusArgs.InvalidArgument($"OutputStream is found, but is not linked to the specified CalclatorGraph");
         }
 
-        var packet = outputStream.referencePacket;
-        packet.SwitchNativePtr(packetPtr);
-        outputStream.InvokeOnReceived(packet);
-        packet.ReleaseMpResource();
+        outputStream.referencePacket.SwitchNativePtr(packetPtr);
+        if (outputStream.TryGetPacketValue(outputStream.referencePacket, out var value, outputStream.timeoutMicrosec))
+        {
+          outputStream.OnReceived?.Invoke(outputStream, new OutputEventArgs<TValue>(value));
+        }
+        outputStream.referencePacket.ReleaseMpResource();
 
-        return StatusArgs.Ok();
+        return Status.StatusArgs.Ok();
       }
       catch (Exception e)
       {
-        return StatusArgs.Internal(e.ToString());
+        return Status.StatusArgs.Internal(e.ToString());
       }
     }
   }

@@ -25,7 +25,7 @@ namespace Mediapipe.Tests
     {
       using (var glCalculatorHelper = new GlCalculatorHelper())
       {
-        glCalculatorHelper.InitializeForTest(GpuResources.Create());
+        glCalculatorHelper.InitializeForTest(GpuResources.Create().Value());
 
         glCalculatorHelper.RunInGlContext(() =>
         {
@@ -34,7 +34,7 @@ namespace Mediapipe.Tests
             Assert.NotNull(glContext);
             Assert.True(glContext.IsCurrent());
           }
-        });
+        }).AssertOk();
       }
     }
     #endregion
@@ -74,7 +74,7 @@ namespace Mediapipe.Tests
     {
       using (var glCalculatorHelper = new GlCalculatorHelper())
       {
-        glCalculatorHelper.InitializeForTest(GpuResources.Create());
+        glCalculatorHelper.InitializeForTest(GpuResources.Create().Value());
 
         return glCalculatorHelper.GetGlContext();
       }

@@ -7,8 +7,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-using mptcc = Mediapipe.Tasks.Components.Containers;
-
 namespace Mediapipe.Unity
 {
 #pragma warning disable IDE0065
@@ -90,79 +88,37 @@ namespace Mediapipe.Unity
       _rightIrisLandmarkListAnnotation.SetCircleWidth(width);
     }
 
-    public void Draw(IReadOnlyList<NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
+    public void Draw(IList<NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
     {
-      if (ActivateFor(target))
-      {
-        var (faceLandmarks, leftLandmarks, rightLandmarks) = PartitionLandmarkList(target);
-        DrawFaceLandmarkList(faceLandmarks, visualizeZ);
-        DrawLeftIrisLandmarkList(leftLandmarks, visualizeZ, circleVertices);
-        DrawRightIrisLandmarkList(rightLandmarks, visualizeZ, circleVertices);
-      }
+      var (faceLandmarks, leftLandmarks, rightLandmarks) = PartitionLandmarkList(target);
+      DrawFaceLandmarkList(faceLandmarks, visualizeZ);
+      DrawLeftIrisLandmarkList(leftLandmarks, visualizeZ, circleVertices);
+      DrawRightIrisLandmarkList(rightLandmarks, visualizeZ, circleVertices);
     }
 
     public void Draw(NormalizedLandmarkList target, bool visualizeZ = false, int circleVertices = 128)
     {
-      if (ActivateFor(target))
-      {
-        Draw(target.Landmark, visualizeZ, circleVertices);
-      }
+      Draw(target.Landmark, visualizeZ, circleVertices);
     }
 
-    public void Draw(IReadOnlyList<mptcc.NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
-    {
-      if (ActivateFor(target))
-      {
-        var (faceLandmarks, leftLandmarks, rightLandmarks) = PartitionLandmarkList(target);
-        DrawFaceLandmarkList(faceLandmarks, visualizeZ);
-        DrawLeftIrisLandmarkList(leftLandmarks, visualizeZ, circleVertices);
-        DrawRightIrisLandmarkList(rightLandmarks, visualizeZ, circleVertices);
-      }
-    }
-
-    public void Draw(mptcc.NormalizedLandmarks target, bool visualizeZ = false, int circleVertices = 128)
-    {
-      if (ActivateFor(target))
-      {
-        Draw(target.landmarks, visualizeZ, circleVertices);
-      }
-    }
-
-    private void DrawFaceLandmarkList(IReadOnlyList<NormalizedLandmark> target, bool visualizeZ = false)
+    public void DrawFaceLandmarkList(IList<NormalizedLandmark> target, bool visualizeZ = false)
     {
       _faceLandmarkListAnnotation.Draw(target, visualizeZ);
     }
 
-    private void DrawFaceLandmarkList(IReadOnlyList<mptcc.NormalizedLandmark> target, bool visualizeZ = false)
-    {
-      _faceLandmarkListAnnotation.Draw(target, visualizeZ);
-    }
-
-    private void DrawLeftIrisLandmarkList(IReadOnlyList<NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
+    public void DrawLeftIrisLandmarkList(IList<NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
     {
       // does not deactivate if the target is null as long as face landmarks are present.
       _leftIrisLandmarkListAnnotation.Draw(target, visualizeZ, circleVertices);
     }
 
-    private void DrawLeftIrisLandmarkList(IReadOnlyList<mptcc.NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
-    {
-      // does not deactivate if the target is null as long as face landmarks are present.
-      _leftIrisLandmarkListAnnotation.Draw(target, visualizeZ, circleVertices);
-    }
-
-    private void DrawRightIrisLandmarkList(IReadOnlyList<NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
+    public void DrawRightIrisLandmarkList(IList<NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
     {
       // does not deactivate if the target is null as long as face landmarks are present.
       _rightIrisLandmarkListAnnotation.Draw(target, visualizeZ, circleVertices);
     }
 
-    private void DrawRightIrisLandmarkList(IReadOnlyList<mptcc.NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
-    {
-      // does not deactivate if the target is null as long as face landmarks are present.
-      _rightIrisLandmarkListAnnotation.Draw(target, visualizeZ, circleVertices);
-    }
-
-    private static (IReadOnlyList<T>, IReadOnlyList<T>, IReadOnlyList<T>) PartitionLandmarkList<T>(IReadOnlyList<T> landmarks)
+    private static (IList<NormalizedLandmark>, IList<NormalizedLandmark>, IList<NormalizedLandmark>) PartitionLandmarkList(IList<NormalizedLandmark> landmarks)
     {
       if (landmarks == null)
       {
@@ -170,7 +126,7 @@ namespace Mediapipe.Unity
       }
 
       var enumerator = landmarks.GetEnumerator();
-      var faceLandmarks = new List<T>(_FaceLandmarkCount);
+      var faceLandmarks = new List<NormalizedLandmark>(_FaceLandmarkCount);
       for (var i = 0; i < _FaceLandmarkCount; i++)
       {
         if (enumerator.MoveNext())
@@ -183,7 +139,7 @@ namespace Mediapipe.Unity
         return (null, null, null);
       }
 
-      var leftIrisLandmarks = new List<T>(_IrisLandmarkCount);
+      var leftIrisLandmarks = new List<NormalizedLandmark>(_IrisLandmarkCount);
       for (var i = 0; i < _IrisLandmarkCount; i++)
       {
         if (enumerator.MoveNext())
@@ -196,7 +152,7 @@ namespace Mediapipe.Unity
         return (faceLandmarks, null, null);
       }
 
-      var rightIrisLandmarks = new List<T>(_IrisLandmarkCount);
+      var rightIrisLandmarks = new List<NormalizedLandmark>(_IrisLandmarkCount);
       for (var i = 0; i < _IrisLandmarkCount; i++)
       {
         if (enumerator.MoveNext())

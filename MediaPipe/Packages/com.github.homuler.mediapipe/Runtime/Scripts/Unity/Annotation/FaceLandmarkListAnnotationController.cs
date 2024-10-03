@@ -14,9 +14,9 @@ namespace Mediapipe.Unity
     [SerializeField] private bool _visualizeZ = false;
     [SerializeField] private int _circleVertices = 128;
 
-    private IReadOnlyList<NormalizedLandmark> _currentTarget;
+    private IList<NormalizedLandmark> _currentTarget;
 
-    public void DrawNow(IReadOnlyList<NormalizedLandmark> target)
+    public void DrawNow(IList<NormalizedLandmark> target)
     {
       _currentTarget = target;
       SyncNow();
@@ -27,7 +27,7 @@ namespace Mediapipe.Unity
       DrawNow(target?.Landmark);
     }
 
-    public void DrawLater(IReadOnlyList<NormalizedLandmark> target)
+    public void DrawLater(IList<NormalizedLandmark> target)
     {
       UpdateCurrentTarget(target, ref _currentTarget);
     }

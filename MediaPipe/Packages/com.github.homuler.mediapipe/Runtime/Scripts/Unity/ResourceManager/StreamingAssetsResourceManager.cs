@@ -11,7 +11,7 @@ using UnityEngine.Networking;
 
 namespace Mediapipe.Unity
 {
-  public class StreamingAssetsResourceManager : IResourceManager
+  public class StreamingAssetsResourceManager : ResourceManager
   {
     private static readonly string _TAG = nameof(StreamingAssetsResourceManager);
 
@@ -19,9 +19,9 @@ namespace Mediapipe.Unity
     private static string _AssetPathRoot;
     private static string _CachePathRoot;
 
-    public StreamingAssetsResourceManager(string path)
+    public StreamingAssetsResourceManager(string path) : base(PathToResourceAsFile, GetResourceContents)
     {
-      ResourceUtil.EnableCustomResolver();
+      // It's safe to update static members because at most one RsourceManager can be initialized.
       _RelativePath = path;
       _AssetPathRoot = Path.Combine(Application.streamingAssetsPath, _RelativePath);
       _CachePathRoot = Path.Combine(Application.persistentDataPath, _RelativePath);
@@ -29,12 +29,18 @@ namespace Mediapipe.Unity
 
     public StreamingAssetsResourceManager() : this("") { }
 
-    IEnumerator IResourceManager.PrepareAssetAsync(string name, string uniqueKey, bool overwriteDestination)
+    public override bool IsPrepared(string name)
+    {
+      var path = GetCachePathFor(name);
+
+      return File.Exists(path);
+    }
+
+    public override IEnumerator PrepareAssetAsync(string name, string uniqueKey, bool overwrite = true)
     {
       var destFilePath = GetCachePathFor(uniqueKey);
-      ResourceUtil.SetAssetPath(name, destFilePath);
 
-      if (File.Exists(destFilePath) && !overwriteDestination)
+      if (File.Exists(destFilePath) && !overwrite)
       {
         Logger.LogInfo(_TAG, $"{name} will not be copied to {destFilePath} because it already exists");
         yield break;
@@ -52,8 +58,23 @@ namespace Mediapipe.Unity
       }
 
       Logger.LogVerbose(_TAG, $"Copying {sourceFilePath} to {destFilePath}...");
-      File.Copy(sourceFilePath, destFilePath, overwriteDestination);
+      File.Copy(sourceFilePath, destFilePath, overwrite);
       Logger.LogVerbose(_TAG, $"{sourceFilePath} is copied to {destFilePath}");
+    }
+
+    protected static string PathToResourceAsFile(string assetPath)
+    {
+      var assetName = GetAssetNameFromPath(assetPath);
+      return GetCachePathFor(assetName);
+    }
+
+    protected static byte[] GetResourceContents(string path)
+    {
+      // TODO: try AsyncReadManager
+      Logger.LogDebug($"{path} is requested");
+
+      var cachePath = PathToResourceAsFile(path);
+      return File.ReadAllBytes(cachePath);
     }
 
     private IEnumerator CreateCacheFile(string assetName)

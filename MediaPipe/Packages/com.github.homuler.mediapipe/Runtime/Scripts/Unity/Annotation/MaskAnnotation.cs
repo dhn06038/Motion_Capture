@@ -4,6 +4,7 @@
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT.
 
+using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -26,7 +27,6 @@ namespace Mediapipe.Unity
     private Material _prevMaterial;
     private Material _material;
     private GraphicsBuffer _maskBuffer;
-    private float[] _maskArray;
 
     private void OnEnable()
     {
@@ -59,7 +59,6 @@ namespace Mediapipe.Unity
       {
         _maskBuffer.Release();
       }
-      _maskArray = null;
     }
 
     public void Init(int width, int height)
@@ -77,27 +76,21 @@ namespace Mediapipe.Unity
       InitMaskBuffer(width, height);
     }
 
-    public void Read(ImageFrame imageFrame)
+    public void Draw(float[] mask, int width, int height)
     {
-      if (imageFrame != null)
+      if (mask == null)
       {
-        // NOTE: assume that the image is transformed properly by calculators.
-        var _ = imageFrame.TryReadChannelNormalized(0, _maskArray);
+        ApplyMaterial(_prevMaterial);
+        return;
       }
-    }
 
-    public void Clear() => ApplyMaterial(_prevMaterial);
+      if (mask.Length != width * height)
+      {
+        throw new ArgumentException("mask size must equal width * height");
+      }
 
-    public void Draw(ImageFrame imageFrame)
-    {
-      Read(imageFrame);
-      Draw();
-    }
-
-    public void Draw()
-    {
       ApplyMaterial(_material);
-      _maskBuffer.SetData(_maskArray);
+      _maskBuffer.SetData(mask);
     }
 
     private Texture2D CreateMonoColorTexture(Color color)
@@ -119,8 +112,6 @@ namespace Mediapipe.Unity
       var stride = Marshal.SizeOf(typeof(float));
       _maskBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, width * height, stride);
       _material.SetBuffer("_MaskBuffer", _maskBuffer);
-
-      _maskArray = new float[width * height];
     }
 
     private void ApplyMaterial(Material material)

@@ -11,7 +11,7 @@ using UnityEngine.Experimental.Rendering;
 
 namespace Mediapipe.Unity
 {
-  public abstract class ImageSource
+  public abstract class ImageSource : MonoBehaviour
   {
     [Serializable]
     public struct ResolutionStruct

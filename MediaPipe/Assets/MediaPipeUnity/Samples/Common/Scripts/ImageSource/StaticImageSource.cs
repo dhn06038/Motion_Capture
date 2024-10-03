@@ -22,12 +22,6 @@ namespace Mediapipe.Unity
       new ResolutionStruct(1280, 720, 0),
     };
 
-    public StaticImageSource(Texture[] availableSources, ResolutionStruct[] defaultAvailableResolutions)
-    {
-      _availableSources = availableSources;
-      _defaultAvailableResolutions = defaultAvailableResolutions;
-    }
-
     private Texture2D _outputTexture;
     private Texture _image;
     private Texture image

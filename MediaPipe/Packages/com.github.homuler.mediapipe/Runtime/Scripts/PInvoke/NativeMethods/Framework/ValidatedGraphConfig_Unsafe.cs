@@ -18,7 +18,7 @@ namespace Mediapipe
     public static extern void mp_ValidatedGraphConfig__delete(IntPtr config);
 
     [DllImport(MediaPipeLibrary, ExactSpelling = true)]
-    public static extern MpReturnCode mp_ValidatedGraphConfig__Initialize__Rcgc(IntPtr config, byte[] serializedConfig, int size,out IntPtr status);
+    public static extern MpReturnCode mp_ValidatedGraphConfig__Initialize__Rcgc(IntPtr config, byte[] serializedConfig, int size, out IntPtr status);
 
     [DllImport(MediaPipeLibrary, ExactSpelling = true)]
     public static extern MpReturnCode mp_ValidatedGraphConfig__Initialize__PKc(IntPtr config, string graphType, out IntPtr status);
@@ -42,12 +42,10 @@ namespace Mediapipe
     public static extern MpReturnCode mp_ValidatedGraphConfig__OutputSidePacketInfos(IntPtr config, out EdgeInfoVector edgeInfoVector);
 
     [DllImport(MediaPipeLibrary, ExactSpelling = true)]
-    public static extern MpReturnCode mp_ValidatedGraphConfig__RegisteredSidePacketTypeName(IntPtr config, string name,
-        out IntPtr status, out IntPtr str);
+    public static extern MpReturnCode mp_ValidatedGraphConfig__RegisteredSidePacketTypeName(IntPtr config, string name, out IntPtr statusOrString);
 
     [DllImport(MediaPipeLibrary, ExactSpelling = true)]
-    public static extern MpReturnCode mp_ValidatedGraphConfig__RegisteredStreamTypeName(IntPtr config, string name,
-        out IntPtr status, out IntPtr str);
+    public static extern MpReturnCode mp_ValidatedGraphConfig__RegisteredStreamTypeName(IntPtr config, string name, out IntPtr statusOrString);
 
     [DllImport(MediaPipeLibrary, ExactSpelling = true)]
     public static extern MpReturnCode mp_ValidatedGraphConfig__Package(IntPtr config, out IntPtr str);

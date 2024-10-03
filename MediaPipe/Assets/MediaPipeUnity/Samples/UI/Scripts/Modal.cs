@@ -6,12 +6,11 @@
 
 using UnityEngine;
 
-namespace Mediapipe.Unity.Sample.UI
+namespace Mediapipe.Unity.UI
 {
   public class Modal : MonoBehaviour
   {
-    [SerializeField] private BaseRunner _baseRunner;
-
+    [SerializeField] private Solution _solution;
     private GameObject _contents;
 
     public void Open(GameObject contents)
@@ -24,9 +23,9 @@ namespace Mediapipe.Unity.Sample.UI
     public void OpenAndPause(GameObject contents)
     {
       Open(contents);
-      if (_baseRunner != null)
+      if (_solution != null)
       {
-        _baseRunner.Pause();
+        _solution.Pause();
       }
     }
 
@@ -44,24 +43,18 @@ namespace Mediapipe.Unity.Sample.UI
     {
       Close();
 
-      if (_baseRunner == null)
+      if (_solution == null)
       {
         return;
       }
 
       if (forceRestart)
       {
-        if (_baseRunner != null)
-        {
-          _baseRunner.Play();
-        }
+        _solution.Play();
       }
       else
       {
-        if (_baseRunner != null)
-        {
-          _baseRunner.Resume();
-        }
+        _solution.Resume();
       }
     }
   }

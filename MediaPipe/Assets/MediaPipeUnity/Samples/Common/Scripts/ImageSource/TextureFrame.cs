@@ -195,7 +195,7 @@ namespace Mediapipe.Unity
       if (!RevokeNativeTexturePtr())
       {
         // If this line was executed, there must be a bug.
-        Debug.LogError("Failed to revoke the native texture.");
+        Logger.LogError("Failed to revoke the native texture.");
       }
     }
 
@@ -287,7 +287,7 @@ namespace Mediapipe.Unity
 
       if (!isIdFound)
       {
-        Debug.LogError($"nameof (name={textureName}) is released, but the owner TextureFrame is not found");
+        Logger.LogError(_TAG, $"nameof (name={textureName}) is released, but the owner TextureFrame is not found");
         return;
       }
 
@@ -295,7 +295,7 @@ namespace Mediapipe.Unity
 
       if (!isTextureFrameFound)
       {
-        Debug.LogWarning($"nameof owner TextureFrame of the released texture (name={textureName}) is already garbage collected");
+        Logger.LogWarning(_TAG, $"nameof owner TextureFrame of the released texture (name={textureName}) is already garbage collected");
         return;
       }
 
@@ -318,7 +318,7 @@ namespace Mediapipe.Unity
         if (ownerId != id && _InstanceTable.TryGetValue(id, out var _))
         {
           // if instance is found, the instance is using the name.
-          Debug.Log($"{id} is using {name} now");
+          Logger.LogVerbose($"{id} is using {name} now");
           return false;
         }
         var _ = _NameTable.Remove(name);

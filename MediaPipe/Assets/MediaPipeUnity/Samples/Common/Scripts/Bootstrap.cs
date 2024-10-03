@@ -5,13 +5,27 @@
 // https://opensource.org/licenses/MIT.
 
 using System.Collections;
+using System.IO;
 using UnityEngine;
 
-namespace Mediapipe.Unity.Sample
+namespace Mediapipe.Unity
 {
   public class Bootstrap : MonoBehaviour
   {
-    [SerializeField] private AppSettings _appSettings;
+    [System.Serializable]
+    public enum AssetLoaderType
+    {
+      StreamingAssets,
+      AssetBundle,
+      Local,
+    }
+
+    private const string _TAG = nameof(Bootstrap);
+
+    [SerializeField] private ImageSourceType _defaultImageSource;
+    [SerializeField] private InferenceMode _preferableInferenceMode;
+    [SerializeField] private AssetLoaderType _assetLoaderType;
+    [SerializeField] private bool _enableGlog = true;
 
     public InferenceMode inferenceMode { get; private set; }
     public bool isFinished { get; private set; }
@@ -24,47 +38,54 @@ namespace Mediapipe.Unity.Sample
 
     private IEnumerator Init()
     {
-      Debug.Log("The configuration for the sample app can be modified using AppSettings.asset.");
-#if !DEBUG && !DEVELOPMENT_BUILD
-      Debug.LogWarning("Logging for the MediaPipeUnityPlugin will be suppressed. To enable logging, please check the 'Development Build' option and build.");
-#endif
-
-      Logger.MinLogLevel = _appSettings.logLevel;
+      Logger.SetLogger(new MemoizedLogger(100));
+      Logger.MinLogLevel = Logger.LogLevel.Debug;
 
       Protobuf.SetLogHandler(Protobuf.DefaultLogHandler);
 
-      Debug.Log("Setting global flags...");
-      _appSettings.ResetGlogFlags();
-      Glog.Initialize("MediaPipeUnityPlugin");
-      _isGlogInitialized = true;
+      Logger.LogInfo(_TAG, "Setting global flags...");
+      GlobalConfigManager.SetFlags();
 
-      Debug.Log("Initializing AssetLoader...");
-      switch (_appSettings.assetLoaderType)
+      if (_enableGlog)
       {
-        case AppSettings.AssetLoaderType.AssetBundle:
+        if (Glog.LogDir != null)
+        {
+          if (!Directory.Exists(Glog.LogDir))
+          {
+            Directory.CreateDirectory(Glog.LogDir);
+          }
+          Logger.LogVerbose(_TAG, $"Glog will output files under {Glog.LogDir}");
+        }
+        Glog.Initialize("MediaPipeUnityPlugin");
+        _isGlogInitialized = true;
+      }
+
+      Logger.LogInfo(_TAG, "Initializing AssetLoader...");
+      switch (_assetLoaderType)
+      {
+        case AssetLoaderType.AssetBundle:
           {
             AssetLoader.Provide(new AssetBundleResourceManager("mediapipe"));
             break;
           }
-        case AppSettings.AssetLoaderType.StreamingAssets:
+        case AssetLoaderType.StreamingAssets:
           {
             AssetLoader.Provide(new StreamingAssetsResourceManager());
             break;
           }
-        case AppSettings.AssetLoaderType.Local:
+        case AssetLoaderType.Local:
           {
 #if UNITY_EDITOR
             AssetLoader.Provide(new LocalResourceManager());
             break;
 #else
-            Debug.LogError("LocalResourceManager is only supported on UnityEditor." +
-              "To avoid this error, consider switching to the StreamingAssetsResourceManager and copying the required resources under StreamingAssets, for example.");
+            Logger.LogError("LocalResourceManager is only supported on UnityEditor");
             yield break;
 #endif
           }
         default:
           {
-            Debug.LogError($"AssetLoaderType is unknown: {_appSettings.assetLoaderType}");
+            Logger.LogError($"AssetLoaderType is unknown: {_assetLoaderType}");
             yield break;
           }
       }
@@ -72,32 +93,54 @@ namespace Mediapipe.Unity.Sample
       DecideInferenceMode();
       if (inferenceMode == InferenceMode.GPU)
       {
-        Debug.Log("Initializing GPU resources...");
+        Logger.LogInfo(_TAG, "Initializing GPU resources...");
         yield return GpuManager.Initialize();
 
         if (!GpuManager.IsInitialized)
         {
-          Debug.LogWarning("If your native library is built for CPU, change 'Preferable Inference Mode' to CPU from the Inspector Window for AppSettings");
+          Logger.LogWarning("If your native library is built for CPU, change 'Preferable Inference Mode' to CPU from the Inspector Window for Bootstrap");
         }
       }
 
-      Debug.Log("Preparing ImageSource...");
-      ImageSourceProvider.Initialize(
-        _appSettings.BuildWebCamSource(), _appSettings.BuildStaticImageSource(), _appSettings.BuildVideoSource());
-      ImageSourceProvider.Switch(_appSettings.defaultImageSource);
+      Logger.LogInfo(_TAG, "Preparing ImageSource...");
+      ImageSourceProvider.ImageSource = GetImageSource(_defaultImageSource);
 
       isFinished = true;
+    }
+
+    public ImageSource GetImageSource(ImageSourceType imageSourceType)
+    {
+      switch (imageSourceType)
+      {
+        case ImageSourceType.WebCamera:
+          {
+            return GetComponent<WebCamSource>();
+          }
+        case ImageSourceType.Image:
+          {
+            return GetComponent<StaticImageSource>();
+          }
+        case ImageSourceType.Video:
+          {
+            return GetComponent<VideoSource>();
+          }
+        case ImageSourceType.Unknown:
+        default:
+          {
+            throw new System.ArgumentException($"Unsupported source type: {imageSourceType}");
+          }
+      }
     }
 
     private void DecideInferenceMode()
     {
 #if UNITY_EDITOR_OSX || UNITY_EDITOR_WIN
-      if (_appSettings.preferableInferenceMode == InferenceMode.GPU) {
-        Debug.LogWarning("Current platform does not support GPU inference mode, so falling back to CPU mode");
+      if (_preferableInferenceMode == InferenceMode.GPU) {
+        Logger.LogWarning(_TAG, "Current platform does not support GPU inference mode, so falling back to CPU mode");
       }
       inferenceMode = InferenceMode.CPU;
 #else
-      inferenceMode = _appSettings.preferableInferenceMode;
+      inferenceMode = _preferableInferenceMode;
 #endif
     }
 
@@ -111,6 +154,7 @@ namespace Mediapipe.Unity.Sample
       }
 
       Protobuf.ResetLogHandler();
+      Logger.SetLogger(null);
     }
   }
 }

@@ -36,20 +36,18 @@ namespace Mediapipe
 
     public IntPtr sharedPtr => _sharedPtrHandle == null ? IntPtr.Zero : _sharedPtrHandle.mpPtr;
 
-    public static GpuResources Create()
+    public static StatusOrGpuResources Create()
     {
-      UnsafeNativeMethods.mp_GpuResources_Create(out var statusPtr, out var gpuResourcesPtr).Assert();
-      AssertStatusOk(statusPtr);
+      UnsafeNativeMethods.mp_GpuResources_Create(out var statusOrGpuResourcesPtr).Assert();
 
-      return new GpuResources(gpuResourcesPtr);
+      return new StatusOrGpuResources(statusOrGpuResourcesPtr);
     }
 
-    public static GpuResources Create(IntPtr externalContext)
+    public static StatusOrGpuResources Create(IntPtr externalContext)
     {
-      UnsafeNativeMethods.mp_GpuResources_Create__Pv(externalContext, out var statusPtr, out var gpuResourcesPtr).Assert();
-      AssertStatusOk(statusPtr);
+      UnsafeNativeMethods.mp_GpuResources_Create__Pv(externalContext, out var statusOrGpuResourcesPtr).Assert();
 
-      return new GpuResources(gpuResourcesPtr);
+      return new StatusOrGpuResources(statusOrGpuResourcesPtr);
     }
 
     private class SharedPtr : SharedPtrHandle

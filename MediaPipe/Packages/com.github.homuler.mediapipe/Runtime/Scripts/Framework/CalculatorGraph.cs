@@ -13,8 +13,8 @@ namespace Mediapipe
 {
   public class CalculatorGraph : MpResourceHandle
   {
-    public delegate StatusArgs NativePacketCallback(IntPtr graphPtr, int streamId, IntPtr packetPtr);
-    public delegate void PacketCallback<T>(Packet<T> packet);
+    public delegate Status.StatusArgs NativePacketCallback(IntPtr graphPtr, int streamId, IntPtr packetPtr);
+    public delegate void PacketCallback<TPacket, TValue>(TPacket packet) where TPacket : Packet<TValue>;
 
     public CalculatorGraph() : base()
     {
@@ -37,22 +37,22 @@ namespace Mediapipe
       UnsafeNativeMethods.mp_CalculatorGraph__delete(ptr);
     }
 
-    public void Initialize(CalculatorGraphConfig config)
+    public Status Initialize(CalculatorGraphConfig config)
     {
       var bytes = config.ToByteArray();
       UnsafeNativeMethods.mp_CalculatorGraph__Initialize__PKc_i(mpPtr, bytes, bytes.Length, out var statusPtr).Assert();
 
       GC.KeepAlive(this);
-      AssertStatusOk(statusPtr);
+      return new Status(statusPtr);
     }
 
-    public void Initialize(CalculatorGraphConfig config, PacketMap sidePacket)
+    public Status Initialize(CalculatorGraphConfig config, SidePacket sidePacket)
     {
       var bytes = config.ToByteArray();
       UnsafeNativeMethods.mp_CalculatorGraph__Initialize__PKc_i_Rsp(mpPtr, bytes, bytes.Length, sidePacket.mpPtr, out var statusPtr).Assert();
 
       GC.KeepAlive(this);
-      AssertStatusOk(statusPtr);
+      return new Status(statusPtr);
     }
 
     /// <remarks>Crashes if config is not set</remarks>
@@ -67,90 +67,89 @@ namespace Mediapipe
       return config;
     }
 
-    public void ObserveOutputStream(string streamName, int streamId, NativePacketCallback nativePacketCallback, bool observeTimestampBounds = false)
+    public Status ObserveOutputStream(string streamName, int streamId, NativePacketCallback nativePacketCallback, bool observeTimestampBounds = false)
     {
       UnsafeNativeMethods.mp_CalculatorGraph__ObserveOutputStream__PKc_PF_b(mpPtr, streamName, streamId, nativePacketCallback, observeTimestampBounds, out var statusPtr).Assert();
 
       GC.KeepAlive(this);
-      AssertStatusOk(statusPtr);
+      return new Status(statusPtr);
     }
 
-    public void ObserveOutputStream<T>(string streamName, PacketCallback<T> packetCallback, bool observeTimestampBounds, out GCHandle callbackHandle)
+    public Status ObserveOutputStream<TPacket, TValue>(string streamName, PacketCallback<TPacket, TValue> packetCallback, bool observeTimestampBounds, out GCHandle callbackHandle) where TPacket : Packet<TValue>, new()
     {
       NativePacketCallback nativePacketCallback = (IntPtr graphPtr, int streamId, IntPtr packetPtr) =>
       {
         try
         {
-          var packet = Packet<T>.CreateForReference(packetPtr);
+          var packet = Packet<TValue>.Create<TPacket>(packetPtr, false);
           packetCallback(packet);
-          return StatusArgs.Ok();
+          return Status.StatusArgs.Ok();
         }
         catch (Exception e)
         {
-          return StatusArgs.Internal(e.ToString());
+          return Status.StatusArgs.Internal(e.ToString());
         }
       };
       callbackHandle = GCHandle.Alloc(nativePacketCallback, GCHandleType.Pinned);
 
-      ObserveOutputStream(streamName, 0, nativePacketCallback, observeTimestampBounds);
+      return ObserveOutputStream(streamName, 0, nativePacketCallback, observeTimestampBounds);
     }
 
-    public void ObserveOutputStream<T>(string streamName, PacketCallback<T> packetCallback, out GCHandle callbackHandle)
+    public Status ObserveOutputStream<TPacket, TValue>(string streamName, PacketCallback<TPacket, TValue> packetCallback, out GCHandle callbackHandle) where TPacket : Packet<TValue>, new()
     {
-      ObserveOutputStream(streamName, packetCallback, false, out callbackHandle);
+      return ObserveOutputStream(streamName, packetCallback, false, out callbackHandle);
     }
 
-    public OutputStreamPoller<T> AddOutputStreamPoller<T>(string streamName, bool observeTimestampBounds = false)
+    public StatusOrPoller<T> AddOutputStreamPoller<T>(string streamName, bool observeTimestampBounds = false)
     {
-      UnsafeNativeMethods.mp_CalculatorGraph__AddOutputStreamPoller__PKc_b(mpPtr, streamName, observeTimestampBounds, out var statusPtr, out var pollerPtr).Assert();
+      UnsafeNativeMethods.mp_CalculatorGraph__AddOutputStreamPoller__PKc_b(mpPtr, streamName, observeTimestampBounds, out var statusOrPollerPtr).Assert();
 
       GC.KeepAlive(this);
-      AssertStatusOk(statusPtr);
-      return new OutputStreamPoller<T>(pollerPtr);
+      return new StatusOrPoller<T>(statusOrPollerPtr);
     }
 
-    public void Run()
+    public Status Run()
     {
-      Run(new PacketMap());
+      return Run(new SidePacket());
     }
 
-    public void Run(PacketMap sidePacket)
+    public Status Run(SidePacket sidePacket)
     {
       UnsafeNativeMethods.mp_CalculatorGraph__Run__Rsp(mpPtr, sidePacket.mpPtr, out var statusPtr).Assert();
 
       GC.KeepAlive(sidePacket);
       GC.KeepAlive(this);
-      AssertStatusOk(statusPtr);
+      return new Status(statusPtr);
     }
 
-    public void StartRun()
+    public Status StartRun()
     {
-      StartRun(new PacketMap());
+      return StartRun(new SidePacket());
     }
 
-    public void StartRun(PacketMap sidePacket)
+    public Status StartRun(SidePacket sidePacket)
     {
       UnsafeNativeMethods.mp_CalculatorGraph__StartRun__Rsp(mpPtr, sidePacket.mpPtr, out var statusPtr).Assert();
 
       GC.KeepAlive(sidePacket);
       GC.KeepAlive(this);
-      AssertStatusOk(statusPtr);
+      return new Status(statusPtr);
     }
 
-    public void WaitUntilIdle()
+    public Status WaitUntilIdle()
     {
       UnsafeNativeMethods.mp_CalculatorGraph__WaitUntilIdle(mpPtr, out var statusPtr).Assert();
 
       GC.KeepAlive(this);
-      AssertStatusOk(statusPtr);
+      return new Status(statusPtr);
     }
 
-    public void WaitUntilDone()
+    public Status WaitUntilDone()
     {
       UnsafeNativeMethods.mp_CalculatorGraph__WaitUntilDone(mpPtr, out var statusPtr).Assert();
 
       GC.KeepAlive(this);
-      AssertStatusOk(statusPtr);
+      return new Status(statusPtr);
     }
 
     public bool HasError()
@@ -158,37 +157,37 @@ namespace Mediapipe
       return SafeNativeMethods.mp_CalculatorGraph__HasError(mpPtr);
     }
 
-    public void AddPacketToInputStream<T>(string streamName, Packet<T> packet)
+    public Status AddPacketToInputStream<T>(string streamName, Packet<T> packet)
     {
       UnsafeNativeMethods.mp_CalculatorGraph__AddPacketToInputStream__PKc_Ppacket(mpPtr, streamName, packet.mpPtr, out var statusPtr).Assert();
       packet.Dispose(); // respect move semantics
 
       GC.KeepAlive(this);
-      AssertStatusOk(statusPtr);
+      return new Status(statusPtr);
     }
 
-    public void SetInputStreamMaxQueueSize(string streamName, int maxQueueSize)
+    public Status SetInputStreamMaxQueueSize(string streamName, int maxQueueSize)
     {
       UnsafeNativeMethods.mp_CalculatorGraph__SetInputStreamMaxQueueSize__PKc_i(mpPtr, streamName, maxQueueSize, out var statusPtr).Assert();
 
       GC.KeepAlive(this);
-      AssertStatusOk(statusPtr);
+      return new Status(statusPtr);
     }
 
-    public void CloseInputStream(string streamName)
+    public Status CloseInputStream(string streamName)
     {
       UnsafeNativeMethods.mp_CalculatorGraph__CloseInputStream__PKc(mpPtr, streamName, out var statusPtr).Assert();
 
       GC.KeepAlive(this);
-      AssertStatusOk(statusPtr);
+      return new Status(statusPtr);
     }
 
-    public void CloseAllPacketSources()
+    public Status CloseAllPacketSources()
     {
       UnsafeNativeMethods.mp_CalculatorGraph__CloseAllPacketSources(mpPtr, out var statusPtr).Assert();
 
       GC.KeepAlive(this);
-      AssertStatusOk(statusPtr);
+      return new Status(statusPtr);
     }
 
     public void Cancel()
@@ -220,13 +219,13 @@ namespace Mediapipe
       return new GpuResources(gpuResourcesPtr);
     }
 
-    public void SetGpuResources(GpuResources gpuResources)
+    public Status SetGpuResources(GpuResources gpuResources)
     {
       UnsafeNativeMethods.mp_CalculatorGraph__SetGpuResources__SPgpu(mpPtr, gpuResources.sharedPtr, out var statusPtr).Assert();
 
       GC.KeepAlive(gpuResources);
       GC.KeepAlive(this);
-      AssertStatusOk(statusPtr);
+      return new Status(statusPtr);
     }
   }
 }

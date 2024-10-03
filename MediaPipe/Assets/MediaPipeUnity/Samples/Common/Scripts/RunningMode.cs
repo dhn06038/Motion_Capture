@@ -10,6 +10,7 @@ namespace Mediapipe.Unity
   public enum RunningMode
   {
     Async,
+    NonBlockingSync,
     Sync,
   }
 
@@ -17,7 +18,7 @@ namespace Mediapipe.Unity
   {
     public static bool IsSynchronous(this RunningMode runningMode)
     {
-      return runningMode == RunningMode.Sync;
+      return runningMode == RunningMode.Sync || runningMode == RunningMode.NonBlockingSync;
     }
   }
 }

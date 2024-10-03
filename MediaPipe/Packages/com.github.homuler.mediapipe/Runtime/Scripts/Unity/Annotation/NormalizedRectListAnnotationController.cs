@@ -10,15 +10,15 @@ namespace Mediapipe.Unity
 {
   public class NormalizedRectListAnnotationController : AnnotationController<RectangleListAnnotation>
   {
-    private IReadOnlyList<NormalizedRect> _currentTarget;
+    private IList<NormalizedRect> _currentTarget;
 
-    public void DrawNow(IReadOnlyList<NormalizedRect> target)
+    public void DrawNow(IList<NormalizedRect> target)
     {
       _currentTarget = target;
       SyncNow();
     }
 
-    public void DrawLater(IReadOnlyList<NormalizedRect> target)
+    public void DrawLater(IList<NormalizedRect> target)
     {
       UpdateCurrentTarget(target, ref _currentTarget);
     }

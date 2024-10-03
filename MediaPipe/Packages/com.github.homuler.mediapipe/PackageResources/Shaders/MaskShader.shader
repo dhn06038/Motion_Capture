@@ -12,8 +12,6 @@ Shader "Unlit/MediaPipe/Mask Shader"
     SubShader
     {
         Tags { "RenderType"="Transparent" }
-        ZWrite Off
-        Blend SrcAlpha OneMinusSrcAlpha
         LOD 100
 
         Pass

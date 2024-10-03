@@ -17,7 +17,7 @@ namespace Mediapipe.Unity
 
     public Texture texture
     {
-      get => _screen.texture;
+      private get => _screen.texture;
       set => _screen.texture = value;
     }
 
@@ -46,7 +46,7 @@ namespace Mediapipe.Unity
       _screen.rectTransform.localEulerAngles = rotationAngle.GetEulerAngles();
     }
 
-    public void ReadSync(Experimental.TextureFrame textureFrame)
+    public void ReadSync(TextureFrame textureFrame)
     {
       if (!(texture is Texture2D))
       {

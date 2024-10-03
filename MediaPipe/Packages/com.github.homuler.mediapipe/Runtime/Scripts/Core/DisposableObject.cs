@@ -14,7 +14,6 @@ namespace Mediapipe
   public abstract class DisposableObject : IDisposable
   {
     private volatile int _disposeSignaled = 0;
-    private bool _isLocked;
 
     public bool isDisposed { get; protected set; }
     protected bool isOwner { get; private set; }
@@ -35,11 +34,6 @@ namespace Mediapipe
 
     protected virtual void Dispose(bool disposing)
     {
-      if (_isLocked)
-      {
-        throw new InvalidOperationException("Cannot dispose a locked object, unlock it first");
-      }
-
       if (Interlocked.Exchange(ref _disposeSignaled, 1) != 0)
       {
         return;
@@ -63,29 +57,12 @@ namespace Mediapipe
 
     protected virtual void DisposeUnmanaged() { }
 
-    /// <summary>
-    ///   Lock the object to prevent it from being disposed.
-    /// </summary>
-    internal void Lock()
-    {
-      _isLocked = true;
-    }
-
-    /// <summary>
-    ///   Unlock the object to allow it to be disposed.
-    /// </summary>
-    internal void Unlock()
-    {
-      _isLocked = false;
-    }
-
-    /// <summary>Relinquish the ownership</summary>
-    protected void TransferOwnership()
+    public void TransferOwnership()
     {
       isOwner = false;
     }
 
-    protected void ThrowIfDisposed()
+    public void ThrowIfDisposed()
     {
       if (isDisposed)
       {

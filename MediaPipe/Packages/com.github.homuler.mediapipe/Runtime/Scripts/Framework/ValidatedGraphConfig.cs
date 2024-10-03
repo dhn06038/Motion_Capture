@@ -104,21 +104,21 @@ namespace Mediapipe
       UnsafeNativeMethods.mp_ValidatedGraphConfig__delete(ptr);
     }
 
-    public void Initialize(CalculatorGraphConfig config)
+    public Status Initialize(CalculatorGraphConfig config)
     {
       var bytes = config.ToByteArray();
       UnsafeNativeMethods.mp_ValidatedGraphConfig__Initialize__Rcgc(mpPtr, bytes, bytes.Length, out var statusPtr).Assert();
 
       GC.KeepAlive(this);
-      AssertStatusOk(statusPtr);
+      return new Status(statusPtr);
     }
 
-    public void Initialize(string graphType)
+    public Status Initialize(string graphType)
     {
       UnsafeNativeMethods.mp_ValidatedGraphConfig__Initialize__PKc(mpPtr, graphType, out var statusPtr).Assert();
 
       GC.KeepAlive(this);
-      AssertStatusOk(statusPtr);
+      return new Status(statusPtr);
     }
 
     public bool Initialized()
@@ -126,13 +126,13 @@ namespace Mediapipe
       return SafeNativeMethods.mp_ValidatedGraphConfig__Initialized(mpPtr);
     }
 
-    public void ValidateRequiredSidePackets(PacketMap sidePacket)
+    public Status ValidateRequiredSidePackets(SidePacket sidePacket)
     {
       UnsafeNativeMethods.mp_ValidatedGraphConfig__ValidateRequiredSidePackets__Rsp(mpPtr, sidePacket.mpPtr, out var statusPtr).Assert();
 
       GC.KeepAlive(sidePacket);
       GC.KeepAlive(this);
-      AssertStatusOk(statusPtr);
+      return new Status(statusPtr);
     }
 
     public CalculatorGraphConfig Config(ExtensionRegistry extensionRegistry = null)
@@ -202,22 +202,20 @@ namespace Mediapipe
       return SafeNativeMethods.mp_ValidatedGraphConfig__OutputStreamToNode__PKc(mpPtr, name);
     }
 
-    public string RegisteredSidePacketTypeName(string name)
+    public StatusOrString RegisteredSidePacketTypeName(string name)
     {
-      UnsafeNativeMethods.mp_ValidatedGraphConfig__RegisteredSidePacketTypeName(mpPtr, name, out var statusPtr, out var strPtr).Assert();
+      UnsafeNativeMethods.mp_ValidatedGraphConfig__RegisteredSidePacketTypeName(mpPtr, name, out var statusOrStringPtr).Assert();
 
       GC.KeepAlive(this);
-      AssertStatusOk(statusPtr);
-      return MarshalStringFromNative(strPtr);
+      return new StatusOrString(statusOrStringPtr);
     }
 
-    public string RegisteredStreamTypeName(string name)
+    public StatusOrString RegisteredStreamTypeName(string name)
     {
-      UnsafeNativeMethods.mp_ValidatedGraphConfig__RegisteredStreamTypeName(mpPtr, name, out var statusPtr, out var strPtr).Assert();
+      UnsafeNativeMethods.mp_ValidatedGraphConfig__RegisteredStreamTypeName(mpPtr, name, out var statusOrStringPtr).Assert();
 
       GC.KeepAlive(this);
-      AssertStatusOk(statusPtr);
-      return MarshalStringFromNative(strPtr);
+      return new StatusOrString(statusOrStringPtr);
     }
 
     public string Package()

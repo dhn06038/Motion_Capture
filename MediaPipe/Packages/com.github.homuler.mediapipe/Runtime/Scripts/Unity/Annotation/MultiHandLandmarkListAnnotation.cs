@@ -7,8 +7,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-using mptcc = Mediapipe.Tasks.Components.Containers;
-
 namespace Mediapipe.Unity
 {
 #pragma warning disable IDE0065
@@ -67,7 +65,7 @@ namespace Mediapipe.Unity
       ApplyConnectionWidth(_connectionWidth);
     }
 
-    public void SetHandedness(IReadOnlyList<ClassificationList> handedness)
+    public void SetHandedness(IList<ClassificationList> handedness)
     {
       var count = handedness == null ? 0 : handedness.Count;
       for (var i = 0; i < Mathf.Min(count, children.Count); i++)
@@ -76,35 +74,11 @@ namespace Mediapipe.Unity
       }
       for (var i = count; i < children.Count; i++)
       {
-        children[i].SetHandedness((IReadOnlyList<Classification>)null);
+        children[i].SetHandedness((IList<Classification>)null);
       }
     }
 
-    public void SetHandedness(IReadOnlyList<mptcc.Classifications> handedness)
-    {
-      var count = handedness == null ? 0 : handedness.Count;
-      for (var i = 0; i < Mathf.Min(count, children.Count); i++)
-      {
-        children[i].SetHandedness(handedness[i]);
-      }
-      for (var i = count; i < children.Count; i++)
-      {
-        children[i].SetHandedness((IReadOnlyList<mptcc.Category>)null);
-      }
-    }
-
-    public void Draw(IReadOnlyList<NormalizedLandmarkList> targets, bool visualizeZ = false)
-    {
-      if (ActivateFor(targets))
-      {
-        CallActionForAll(targets, (annotation, target) =>
-        {
-          if (annotation != null) { annotation.Draw(target, visualizeZ); }
-        });
-      }
-    }
-
-    public void Draw(IReadOnlyList<mptcc.NormalizedLandmarks> targets, bool visualizeZ = false)
+    public void Draw(IList<NormalizedLandmarkList> targets, bool visualizeZ = false)
     {
       if (ActivateFor(targets))
       {

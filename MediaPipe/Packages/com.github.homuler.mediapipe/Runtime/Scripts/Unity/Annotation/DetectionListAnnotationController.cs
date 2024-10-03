@@ -13,9 +13,9 @@ namespace Mediapipe.Unity
   {
     [SerializeField, Range(0, 1)] private float _threshold = 0.0f;
 
-    private IReadOnlyList<Detection> _currentTarget;
+    private IList<Detection> _currentTarget;
 
-    public void DrawNow(IReadOnlyList<Detection> target)
+    public void DrawNow(IList<Detection> target)
     {
       _currentTarget = target;
       SyncNow();
@@ -26,7 +26,7 @@ namespace Mediapipe.Unity
       DrawNow(target?.Detection);
     }
 
-    public void DrawLater(IReadOnlyList<Detection> target)
+    public void DrawLater(IList<Detection> target)
     {
       UpdateCurrentTarget(target, ref _currentTarget);
     }

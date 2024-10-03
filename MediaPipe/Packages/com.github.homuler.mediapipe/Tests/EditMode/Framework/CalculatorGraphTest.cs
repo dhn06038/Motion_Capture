@@ -69,13 +69,16 @@ output_stream: ""out""
 
     #region #Initialize
     [Test]
-    public void Initialize_ShouldNotThrow_When_CalledWithConfig_And_ConfigIsNotSet()
+    public void Initialize_ShouldReturnOk_When_CalledWithConfig_And_ConfigIsNotSet()
     {
       using (var graph = new CalculatorGraph())
       {
-        graph.Initialize(CalculatorGraphConfig.Parser.ParseFromTextFormat(_ValidConfigText));
-        var config = graph.Config();
+        using (var status = graph.Initialize(CalculatorGraphConfig.Parser.ParseFromTextFormat(_ValidConfigText)))
+        {
+          Assert.True(status.Ok());
+        }
 
+        var config = graph.Config();
         Assert.AreEqual("in", config.InputStream[0]);
         Assert.AreEqual("out", config.OutputStream[0]);
       }
@@ -86,26 +89,28 @@ output_stream: ""out""
     {
       using (var graph = new CalculatorGraph(_ValidConfigText))
       {
-        var exception = Assert.Throws<BadStatusException>(() =>
+        using (var status = graph.Initialize(CalculatorGraphConfig.Parser.ParseFromTextFormat(_ValidConfigText)))
         {
-          graph.Initialize(CalculatorGraphConfig.Parser.ParseFromTextFormat(_ValidConfigText));
-        });
-        Assert.AreEqual(StatusCode.Internal, exception.statusCode);
+          Assert.AreEqual(Status.StatusCode.Internal, status.Code());
+        }
       }
     }
 
     [Test]
-    public void Initialize_ShouldNotThrow_When_CalledWithConfigAndSidePacket_And_ConfigIsNotSet()
+    public void Initialize_ShouldReturnOk_When_CalledWithConfigAndSidePacket_And_ConfigIsNotSet()
     {
-      using (var sidePacket = new PacketMap())
+      using (var sidePacket = new SidePacket())
       {
-        sidePacket.Emplace("flag", Packet.CreateBool(true));
+        sidePacket.Emplace("flag", new BoolPacket(true));
 
         using (var graph = new CalculatorGraph())
         {
           var config = CalculatorGraphConfig.Parser.ParseFromTextFormat(_ValidConfigText);
 
-          Assert.DoesNotThrow(() => graph.Initialize(config, sidePacket));
+          using (var status = graph.Initialize(config, sidePacket))
+          {
+            Assert.True(status.Ok());
+          }
         }
       }
     }
@@ -113,16 +118,18 @@ output_stream: ""out""
     [Test]
     public void Initialize_ShouldReturnInternalError_When_CalledWithConfigAndSidePacket_And_ConfigIsSet()
     {
-      using (var sidePacket = new PacketMap())
+      using (var sidePacket = new SidePacket())
       {
-        sidePacket.Emplace("flag", Packet.CreateBool(true));
+        sidePacket.Emplace("flag", new BoolPacket(true));
 
         using (var graph = new CalculatorGraph(_ValidConfigText))
         {
           var config = CalculatorGraphConfig.Parser.ParseFromTextFormat(_ValidConfigText);
 
-          var exception = Assert.Throws<BadStatusException>(() => graph.Initialize(config, sidePacket));
-          Assert.AreEqual(StatusCode.Internal, exception.statusCode);
+          using (var status = graph.Initialize(config, sidePacket))
+          {
+            Assert.AreEqual(Status.StatusCode.Internal, status.Code());
+          }
         }
       }
     }
@@ -134,13 +141,13 @@ output_stream: ""out""
     {
       using (var graph = new CalculatorGraph(_ValidConfigText))
       {
-        graph.StartRun();
+        Assert.True(graph.StartRun().Ok());
         Assert.False(graph.GraphInputStreamsClosed());
 
-        graph.WaitUntilIdle();
-        graph.CloseAllPacketSources();
+        Assert.True(graph.WaitUntilIdle().Ok());
+        Assert.True(graph.CloseAllPacketSources().Ok());
         Assert.True(graph.GraphInputStreamsClosed());
-        graph.WaitUntilDone();
+        Assert.True(graph.WaitUntilDone().Ok());
         Assert.False(graph.HasError());
       }
     }
@@ -150,10 +157,9 @@ output_stream: ""out""
     {
       using (var graph = new CalculatorGraph(_ValidConfigText))
       {
-        graph.StartRun();
+        Assert.True(graph.StartRun().Ok());
         graph.Cancel();
-        var exception = Assert.Throws<BadStatusException>(() => graph.WaitUntilDone());
-        Assert.AreEqual(StatusCode.Cancelled, exception.statusCode);
+        Assert.AreEqual(Status.StatusCode.Cancelled, graph.WaitUntilDone().Code());
       }
     }
     #endregion

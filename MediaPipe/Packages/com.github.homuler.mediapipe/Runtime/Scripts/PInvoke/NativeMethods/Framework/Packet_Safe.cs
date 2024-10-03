@@ -17,12 +17,9 @@ namespace Mediapipe
     public static extern bool mp_Packet__IsEmpty(IntPtr packet);
 
     [DllImport(MediaPipeLibrary, ExactSpelling = true)]
-    public static extern long mp_Packet__TimestampMicroseconds(IntPtr packet);
-
-    [DllImport(MediaPipeLibrary, ExactSpelling = true)]
-    public static extern void mp_PacketMap__clear(IntPtr packetMap);
+    public static extern void mp_SidePacket__clear(IntPtr sidePacket);
 
     [Pure, DllImport(MediaPipeLibrary, ExactSpelling = true)]
-    public static extern int mp_PacketMap__size(IntPtr packetMap);
+    public static extern int mp_SidePacket__size(IntPtr sidePacket);
   }
 }
