@@ -26,6 +26,27 @@
 - **Latency and Frame Rate**: Higher-end systems offer higher frame rates and lower latency, which is important for real-time applications.
 - **Depth Perception**: Webcams lack depth sensors, unlike advanced mocap cameras that use infrared or other techniques to capture 3D motion data accurately.
 
+## 1. Hand Tracking
+
+ **Hand tracking** is achieved using MediaPipe, which tracks 21 landmark points of the hand in real-time. In this project, the hand tracking system not only tracks hand movements but also allows interaction with objects in the Unity scene.
+
+ <img src="https://github.com/user-attachments/assets/c2ca677f-bccf-45ad-b2e5-59ebe683b0f8" width="80%" height="45%"/>
+
+## 2. Pose Estimation
+ **Pose estimation** imports full-body pose data from MediaPipe and tracks 33 landmark points of a person's body. This system records a person’s path in Unity, which can be used for gameplay or performance analysis. The recorded data can visualize the user’s movement in 3D space, allowing applications like real-time navigation or fitness tracking.
+
+ <img src="https://github.com/user-attachments/assets/354b627a-f5f6-4e3e-86e5-1262f4aecdfc" width="80%" height="45%"/>
+
+## 3. Facial Landmark Detection
+ **Facial landmark detection** reconstructs the 468 landmark points of the face in 3D space. In this project, facial data is used to interact with Unity objects based on facial movements. For instance, the distance between the mouth is calculated and used to control the rotation of a cube, making the system responsive to facial expressions. This approach opens up possibilities for interactive facial-driven interfaces in virtual environments.
+
+ <img src="https://github.com/user-attachments/assets/9b12e653-613f-4d69-8244-dcedc29a2f5f" width="80%" height="45%"/>
+
+## 4. Avatar Animation Using MediaPipe Pose Data
+  The avatar animation system utilizes MediaPipe's pose data to animate a 3D character model in Unity. The pose data, which includes body, hand, and face landmarks, is mapped onto the avatar’s skeleton, allowing for real-time animation. This feature is ideal for creating interactive virtual characters or for use in virtual reality (VR) environments where users' movements are mirrored onto the avatar.
+
+  <img src="https://github.com/user-attachments/assets/4b89fc99-aef1-41e1-9371-4123a305422b" width="80%" height="45%"/>
+
 ## Development Environment
 
 Pycharm (2024.2.1)
