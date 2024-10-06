@@ -55,4 +55,4 @@ Unity (2022.3.24f1)
 
 ## Python Library
 
-CVZone 1.6.1 (Using OpenCV, MediaPipe for pose detection, hand tracking, facial capture)
+OpenCV, MediaPipe for pose detection, hand tracking, facial capture
