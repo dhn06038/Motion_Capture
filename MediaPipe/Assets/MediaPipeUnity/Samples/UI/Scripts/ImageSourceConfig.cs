@@ -7,10 +7,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 using UnityEngine.UI;
 
-namespace Mediapipe.Unity.UI
+namespace Mediapipe.Unity.Sample.UI
 {
   public class ImageSourceConfig : ModalContents
   {
@@ -19,7 +18,6 @@ namespace Mediapipe.Unity.UI
     private const string _ResolutionPath = "Scroll View/Viewport/Contents/Resolution/Dropdown";
     private const string _IsHorizontallyFlippedPath = "Scroll View/Viewport/Contents/IsHorizontallyFlipped/Toggle";
 
-    private Solution _solution;
     private Dropdown _sourceTypeInput;
     private Dropdown _sourceInput;
     private Dropdown _resolutionInput;
@@ -29,7 +27,6 @@ namespace Mediapipe.Unity.UI
 
     private void Start()
     {
-      _solution = GameObject.Find("Solution").GetComponent<Solution>();
       InitializeContents();
     }
 
@@ -65,7 +62,7 @@ namespace Mediapipe.Unity.UI
 
       _sourceTypeInput.onValueChanged.AddListener(delegate
       {
-        ImageSourceProvider.ImageSource = _solution.bootstrap.GetImageSource((ImageSourceType)_sourceTypeInput.value);
+        ImageSourceProvider.Switch((ImageSourceType)_sourceTypeInput.value);
         _isChanged = true;
         InitializeContents();
       });

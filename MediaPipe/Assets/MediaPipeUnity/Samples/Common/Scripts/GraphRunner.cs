@@ -8,12 +8,16 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
+
+#if UNITY_ANDROID
 using UnityEngine.Rendering;
+#endif
 
 using Stopwatch = System.Diagnostics.Stopwatch;
 
-namespace Mediapipe.Unity
+namespace Mediapipe.Unity.Sample
 {
   public abstract class GraphRunner : MonoBehaviour
   {
@@ -92,7 +96,7 @@ namespace Mediapipe.Unity
 
     private Stopwatch _stopwatch;
     protected CalculatorGraph calculatorGraph { get; private set; }
-    protected Timestamp latestTimestamp;
+    protected long latestTimestamp;
 
     protected virtual void Start()
     {
@@ -113,14 +117,14 @@ namespace Mediapipe.Unity
     {
       this.runningMode = runningMode;
 
-      Logger.LogInfo(TAG, $"Config Type = {configType}");
-      Logger.LogInfo(TAG, $"Running Mode = {runningMode}");
+      Debug.Log($"Config Type = {configType}");
+      Debug.Log($"Running Mode = {runningMode}");
 
-      InitializeCalculatorGraph().AssertOk();
+      InitializeCalculatorGraph();
       _stopwatch = new Stopwatch();
       _stopwatch.Start();
 
-      Logger.LogInfo(TAG, "Loading dependent assets...");
+      Debug.Log("Loading dependent assets...");
       var assetRequests = RequestDependentAssets();
       yield return new WaitWhile(() => assetRequests.Any((request) => request.keepWaiting));
 
@@ -129,7 +133,7 @@ namespace Mediapipe.Unity
       {
         foreach (var error in errors)
         {
-          Logger.LogError(TAG, error);
+          Debug.LogError(error);
         }
         throw new InternalException("Failed to prepare dependent assets");
       }
@@ -137,9 +141,9 @@ namespace Mediapipe.Unity
 
     public abstract void StartRun(ImageSource imageSource);
 
-    protected void StartRun(SidePacket sidePacket)
+    protected void StartRun(PacketMap sidePacket)
     {
-      calculatorGraph.StartRun(sidePacket).AssertOk();
+      calculatorGraph.StartRun(sidePacket);
       _isRunning = true;
     }
 
@@ -149,20 +153,22 @@ namespace Mediapipe.Unity
       {
         if (_isRunning)
         {
-          using (var status = calculatorGraph.CloseAllPacketSources())
+          try
           {
-            if (!status.Ok())
-            {
-              Logger.LogError(TAG, status.ToString());
-            }
+            calculatorGraph.CloseAllPacketSources();
+          }
+          catch (BadStatusException exception)
+          {
+            Debug.LogError(exception);
           }
 
-          using (var status = calculatorGraph.WaitUntilDone())
+          try
           {
-            if (!status.Ok())
-            {
-              Logger.LogError(TAG, status.ToString());
-            }
+            calculatorGraph.WaitUntilDone();
+          }
+          catch (BadStatusException exception)
+          {
+            Debug.LogError(exception);
           }
         }
 
@@ -180,30 +186,182 @@ namespace Mediapipe.Unity
 
     protected void AddPacketToInputStream<T>(string streamName, Packet<T> packet)
     {
-      calculatorGraph.AddPacketToInputStream(streamName, packet).AssertOk();
+      calculatorGraph.AddPacketToInputStream(streamName, packet);
     }
 
-    protected void AddTextureFrameToInputStream(string streamName, TextureFrame textureFrame)
+    protected void AddTextureFrameToInputStream(string streamName, Experimental.TextureFrame textureFrame, GlContext glContext = null)
     {
-      latestTimestamp = GetCurrentTimestamp();
+      latestTimestamp = GetCurrentTimestampMicrosec();
 
-      if (configType == ConfigType.OpenGLES)
+      if (glContext != null)
       {
-        var gpuBuffer = textureFrame.BuildGpuBuffer(GpuManager.GlCalculatorHelper.GetGlContext());
-        AddPacketToInputStream(streamName, new GpuBufferPacket(gpuBuffer, latestTimestamp));
+        var gpuBuffer = textureFrame.BuildGpuBuffer(glContext);
+        AddPacketToInputStream(streamName, Packet.CreateGpuBufferAt(gpuBuffer, latestTimestamp));
         return;
       }
 
       var imageFrame = textureFrame.BuildImageFrame();
       textureFrame.Release();
 
-      AddPacketToInputStream(streamName, new ImageFramePacket(imageFrame, latestTimestamp));
+      AddPacketToInputStream(streamName, Packet.CreateImageFrameAt(imageFrame, latestTimestamp));
     }
 
-    protected bool TryGetNext<TPacket, TValue>(OutputStream<TPacket, TValue> stream, out TValue value, bool allowBlock, long currentTimestampMicrosec) where TPacket : Packet<TValue>, new()
+    protected bool TryGetValue<T>(Packet<T> packet, out T value, Func<Packet<T>, T> getter)
     {
-      var result = stream.TryGetNext(out value, allowBlock);
-      return result || allowBlock || stream.ResetTimestampIfTimedOut(currentTimestampMicrosec, timeoutMicrosec);
+      if (packet == null)
+      {
+        value = default;
+        return false;
+      }
+      value = getter(packet);
+      return true;
+    }
+
+    protected void AssertResult<T>(OutputStream<T>.NextResult result)
+    {
+      if (!result.ok)
+      {
+        throw new Exception("Failed to get the next packet");
+      }
+    }
+
+    protected void AssertResult<T1, T2>((OutputStream<T1>.NextResult, OutputStream<T2>.NextResult) result)
+    {
+      AssertResult(result.Item1);
+      AssertResult(result.Item2);
+    }
+
+    protected void AssertResult<T1, T2, T3>((OutputStream<T1>.NextResult, OutputStream<T2>.NextResult, OutputStream<T3>.NextResult) result)
+    {
+      AssertResult(result.Item1);
+      AssertResult(result.Item2);
+      AssertResult(result.Item3);
+    }
+
+    protected void AssertResult<T1, T2, T3, T4>((OutputStream<T1>.NextResult, OutputStream<T2>.NextResult, OutputStream<T3>.NextResult, OutputStream<T4>.NextResult) result)
+    {
+      AssertResult(result.Item1);
+      AssertResult(result.Item2);
+      AssertResult(result.Item3);
+      AssertResult(result.Item4);
+    }
+
+    protected void AssertResult<T1, T2, T3, T4, T5>(
+      (
+        OutputStream<T1>.NextResult,
+        OutputStream<T2>.NextResult,
+        OutputStream<T3>.NextResult,
+        OutputStream<T4>.NextResult,
+        OutputStream<T5>.NextResult
+      ) result)
+    {
+      AssertResult(result.Item1);
+      AssertResult(result.Item2);
+      AssertResult(result.Item3);
+      AssertResult(result.Item4);
+      AssertResult(result.Item5);
+    }
+
+    protected void AssertResult<T1, T2, T3, T4, T5, T6>(
+      (
+        OutputStream<T1>.NextResult,
+        OutputStream<T2>.NextResult,
+        OutputStream<T3>.NextResult,
+        OutputStream<T4>.NextResult,
+        OutputStream<T5>.NextResult,
+        OutputStream<T6>.NextResult
+      ) result)
+    {
+      AssertResult(result.Item1);
+      AssertResult(result.Item2);
+      AssertResult(result.Item3);
+      AssertResult(result.Item4);
+      AssertResult(result.Item5);
+      AssertResult(result.Item6);
+    }
+
+    protected void AssertResult<T1, T2, T3, T4, T5, T6, T7>(
+      (
+        OutputStream<T1>.NextResult,
+        OutputStream<T2>.NextResult,
+        OutputStream<T3>.NextResult,
+        OutputStream<T4>.NextResult,
+        OutputStream<T5>.NextResult,
+        OutputStream<T6>.NextResult,
+        OutputStream<T7>.NextResult
+      ) result)
+    {
+      AssertResult(result.Item1);
+      AssertResult(result.Item2);
+      AssertResult(result.Item3);
+      AssertResult(result.Item4);
+      AssertResult(result.Item5);
+      AssertResult(result.Item6);
+      AssertResult(result.Item7);
+    }
+
+    protected void AssertResult<T1, T2, T3, T4, T5, T6, T7, T8>(
+      (
+        OutputStream<T1>.NextResult,
+        OutputStream<T2>.NextResult,
+        OutputStream<T3>.NextResult,
+        OutputStream<T4>.NextResult,
+        OutputStream<T5>.NextResult,
+        OutputStream<T6>.NextResult,
+        OutputStream<T7>.NextResult,
+        OutputStream<T8>.NextResult
+      ) result)
+    {
+      AssertResult(result.Item1);
+      AssertResult(result.Item2);
+      AssertResult(result.Item3);
+      AssertResult(result.Item4);
+      AssertResult(result.Item5);
+      AssertResult(result.Item6);
+      AssertResult(result.Item7);
+      AssertResult(result.Item8);
+    }
+
+    protected async Task<(T1, T2)> WhenAll<T1, T2>(Task<T1> task1, Task<T2> task2)
+    {
+      await Task.WhenAll(task1, task2);
+      return (task1.Result, task2.Result);
+    }
+
+    protected async Task<(T1, T2, T3)> WhenAll<T1, T2, T3>(Task<T1> task1, Task<T2> task2, Task<T3> task3)
+    {
+      await Task.WhenAll(task1, task2, task3);
+      return (task1.Result, task2.Result, task3.Result);
+    }
+
+    protected async Task<(T1, T2, T3, T4)> WhenAll<T1, T2, T3, T4>(Task<T1> task1, Task<T2> task2, Task<T3> task3, Task<T4> task4)
+    {
+      await Task.WhenAll(task1, task2, task3, task4);
+      return (task1.Result, task2.Result, task3.Result, task4.Result);
+    }
+
+    protected async Task<(T1, T2, T3, T4, T5)> WhenAll<T1, T2, T3, T4, T5>(Task<T1> task1, Task<T2> task2, Task<T3> task3, Task<T4> task4, Task<T5> task5)
+    {
+      await Task.WhenAll(task1, task2, task3, task4, task5);
+      return (task1.Result, task2.Result, task3.Result, task4.Result, task5.Result);
+    }
+
+    protected async Task<(T1, T2, T3, T4, T5, T6)> WhenAll<T1, T2, T3, T4, T5, T6>(Task<T1> task1, Task<T2> task2, Task<T3> task3, Task<T4> task4, Task<T5> task5, Task<T6> task6)
+    {
+      await Task.WhenAll(task1, task2, task3, task4, task5, task6);
+      return (task1.Result, task2.Result, task3.Result, task4.Result, task5.Result, task6.Result);
+    }
+
+    protected async Task<(T1, T2, T3, T4, T5, T6, T7)> WhenAll<T1, T2, T3, T4, T5, T6, T7>(Task<T1> task1, Task<T2> task2, Task<T3> task3, Task<T4> task4, Task<T5> task5, Task<T6> task6, Task<T7> task7)
+    {
+      await Task.WhenAll(task1, task2, task3, task4, task5, task6, task7);
+      return (task1.Result, task2.Result, task3.Result, task4.Result, task5.Result, task6.Result, task7.Result);
+    }
+
+    protected async Task<(T1, T2, T3, T4, T5, T6, T7, T8)> WhenAll<T1, T2, T3, T4, T5, T6, T7, T8>(Task<T1> task1, Task<T2> task2, Task<T3> task3, Task<T4> task4, Task<T5> task5, Task<T6> task6, Task<T7> task7, Task<T8> task8)
+    {
+      await Task.WhenAll(task1, task2, task3, task4, task5, task6, task7, task8);
+      return (task1.Result, task2.Result, task3.Result, task4.Result, task5.Result, task6.Result, task7.Result, task8.Result);
     }
 
     protected long GetCurrentTimestampMicrosec()
@@ -211,13 +369,7 @@ namespace Mediapipe.Unity
       return _stopwatch == null || !_stopwatch.IsRunning ? -1 : _stopwatch.ElapsedTicks / (TimeSpan.TicksPerMillisecond / 1000);
     }
 
-    protected Timestamp GetCurrentTimestamp()
-    {
-      var microsec = GetCurrentTimestampMicrosec();
-      return microsec < 0 ? Timestamp.Unset() : new Timestamp(microsec);
-    }
-
-    protected Status InitializeCalculatorGraph()
+    protected void InitializeCalculatorGraph()
     {
       calculatorGraph = new CalculatorGraph();
       _NameTable.Add(calculatorGraph.mpPtr, GetInstanceID());
@@ -229,19 +381,16 @@ namespace Mediapipe.Unity
       //   However, if the config format is invalid, this code does not initialize CalculatorGraph and does not throw exceptions either.
       //   The problem is that if you call ObserveStreamOutput in this state, the program will crash.
       //   The following code is not very efficient, but it will return Non-OK status when an invalid configuration is given.
-      try
+      var baseConfig = textConfig == null ? null : CalculatorGraphConfig.Parser.ParseFromTextFormat(textConfig.text);
+      if (baseConfig == null)
       {
-        var baseConfig = textConfig == null ? null : CalculatorGraphConfig.Parser.ParseFromTextFormat(textConfig.text);
-        if (baseConfig == null)
-        {
-          throw new InvalidOperationException("Failed to get the text config. Check if the config is set to GraphRunner");
-        }
-        var status = ConfigureCalculatorGraph(baseConfig);
-        return !status.Ok() || inferenceMode == InferenceMode.CPU ? status : calculatorGraph.SetGpuResources(GpuManager.GpuResources);
+        throw new InvalidOperationException("Failed to get the text config. Check if the config is set to GraphRunner");
       }
-      catch (Exception e)
+      ConfigureCalculatorGraph(baseConfig);
+
+      if (inferenceMode != InferenceMode.CPU)
       {
-        return Status.FailedPrecondition(e.ToString());
+        calculatorGraph.SetGpuResources(GpuManager.GpuResources);
       }
     }
 
@@ -257,12 +406,12 @@ namespace Mediapipe.Unity
     ///   A <see cref="CalculatorGraphConfig" /> instance corresponding to <see cref="textConfig" />.<br />
     ///   It can be dynamically modified here.
     /// </param>
-    protected virtual Status ConfigureCalculatorGraph(CalculatorGraphConfig config)
+    protected virtual void ConfigureCalculatorGraph(CalculatorGraphConfig config)
     {
-      return calculatorGraph.Initialize(config);
+      calculatorGraph.Initialize(config);
     }
 
-    protected void SetImageTransformationOptions(SidePacket sidePacket, ImageSource imageSource, bool expectedToBeMirrored = false)
+    protected void SetImageTransformationOptions(PacketMap sidePacket, ImageSource imageSource, bool expectedToBeMirrored = false)
     {
       // NOTE: The origin is left-bottom corner in Unity, and right-top corner in MediaPipe.
       rotation = imageSource.rotation.Reverse();
@@ -279,11 +428,11 @@ namespace Mediapipe.Unity
         inputVerticallyFlipped = !inputVerticallyFlipped;
       }
 
-      Logger.LogDebug($"input_rotation = {inputRotation}, input_horizontally_flipped = {inputHorizontallyFlipped}, input_vertically_flipped = {inputVerticallyFlipped}");
+      Debug.Log($"input_rotation = {inputRotation}, input_horizontally_flipped = {inputHorizontallyFlipped}, input_vertically_flipped = {inputVerticallyFlipped}");
 
-      sidePacket.Emplace("input_rotation", new IntPacket((int)inputRotation));
-      sidePacket.Emplace("input_horizontally_flipped", new BoolPacket(inputHorizontallyFlipped));
-      sidePacket.Emplace("input_vertically_flipped", new BoolPacket(inputVerticallyFlipped));
+      sidePacket.Emplace("input_rotation", Packet.CreateInt((int)inputRotation));
+      sidePacket.Emplace("input_horizontally_flipped", Packet.CreateBool(inputHorizontallyFlipped));
+      sidePacket.Emplace("input_vertically_flipped", Packet.CreateBool(inputVerticallyFlipped));
     }
 
     protected WaitForResult WaitForAsset(string assetName, string uniqueKey, long timeoutMillisec, bool overwrite = false)

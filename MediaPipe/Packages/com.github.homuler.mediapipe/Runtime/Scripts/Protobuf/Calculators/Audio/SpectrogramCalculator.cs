@@ -26,7 +26,7 @@ namespace Mediapipe {
           string.Concat(
             "CjhtZWRpYXBpcGUvY2FsY3VsYXRvcnMvYXVkaW8vc3BlY3Ryb2dyYW1fY2Fs",
             "Y3VsYXRvci5wcm90bxIJbWVkaWFwaXBlGiRtZWRpYXBpcGUvZnJhbWV3b3Jr",
-            "L2NhbGN1bGF0b3IucHJvdG8i/gQKHFNwZWN0cm9ncmFtQ2FsY3VsYXRvck9w",
+            "L2NhbGN1bGF0b3IucHJvdG8ikwUKHFNwZWN0cm9ncmFtQ2FsY3VsYXRvck9w",
             "dGlvbnMSHgoWZnJhbWVfZHVyYXRpb25fc2Vjb25kcxgBIAEoARIgChVmcmFt",
             "ZV9vdmVybGFwX3NlY29uZHMYAiABKAE6ATASHgoQcGFkX2ZpbmFsX3BhY2tl",
             "dBgDIAEoCDoEdHJ1ZRJaCgtvdXRwdXRfdHlwZRgEIAEoDjIyLm1lZGlhcGlw",
@@ -35,16 +35,17 @@ namespace Mediapipe {
             "IAEoCDoFZmFsc2USTQoLd2luZG93X3R5cGUYBiABKA4yMi5tZWRpYXBpcGUu",
             "U3BlY3Ryb2dyYW1DYWxjdWxhdG9yT3B0aW9ucy5XaW5kb3dUeXBlOgRIQU5O",
             "EhcKDG91dHB1dF9zY2FsZRgHIAEoAToBMRIiChN1c2VfbG9jYWxfdGltZXN0",
-            "YW1wGAggASgIOgVmYWxzZSJUCgpPdXRwdXRUeXBlEhUKEVNRVUFSRURfTUFH",
-            "TklUVURFEAASFAoQTElORUFSX01BR05JVFVERRABEgwKCERFQ0lCRUxTEAIS",
-            "CwoHQ09NUExFWBADIj4KCldpbmRvd1R5cGUSCAoESEFOThAAEgsKB0hBTU1J",
-            "TkcQARIKCgZDT1NJTkUQAhINCglTUVJUX0hBTk4QBDJVCgNleHQSHC5tZWRp",
-            "YXBpcGUuQ2FsY3VsYXRvck9wdGlvbnMYwIiqJCABKAsyJy5tZWRpYXBpcGUu",
-            "U3BlY3Ryb2dyYW1DYWxjdWxhdG9yT3B0aW9ucw=="));
+            "YW1wGAggASgIOgVmYWxzZRITCghmZnRfc2l6ZRgJIAEoBToBMCJUCgpPdXRw",
+            "dXRUeXBlEhUKEVNRVUFSRURfTUFHTklUVURFEAASFAoQTElORUFSX01BR05J",
+            "VFVERRABEgwKCERFQ0lCRUxTEAISCwoHQ09NUExFWBADIj4KCldpbmRvd1R5",
+            "cGUSCAoESEFOThAAEgsKB0hBTU1JTkcQARIKCgZDT1NJTkUQAhINCglTUVJU",
+            "X0hBTk4QBDJVCgNleHQSHC5tZWRpYXBpcGUuQ2FsY3VsYXRvck9wdGlvbnMY",
+            "wIiqJCABKAsyJy5tZWRpYXBpcGUuU3BlY3Ryb2dyYW1DYWxjdWxhdG9yT3B0",
+            "aW9ucw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Mediapipe.CalculatorReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Mediapipe.SpectrogramCalculatorOptions), global::Mediapipe.SpectrogramCalculatorOptions.Parser, new[]{ "FrameDurationSeconds", "FrameOverlapSeconds", "PadFinalPacket", "OutputType", "AllowMultichannelInput", "WindowType", "OutputScale", "UseLocalTimestamp" }, null, new[]{ typeof(global::Mediapipe.SpectrogramCalculatorOptions.Types.OutputType), typeof(global::Mediapipe.SpectrogramCalculatorOptions.Types.WindowType) }, new pb::Extension[] { global::Mediapipe.SpectrogramCalculatorOptions.Extensions.Ext }, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Mediapipe.SpectrogramCalculatorOptions), global::Mediapipe.SpectrogramCalculatorOptions.Parser, new[]{ "FrameDurationSeconds", "FrameOverlapSeconds", "PadFinalPacket", "OutputType", "AllowMultichannelInput", "WindowType", "OutputScale", "UseLocalTimestamp", "FftSize" }, null, new[]{ typeof(global::Mediapipe.SpectrogramCalculatorOptions.Types.OutputType), typeof(global::Mediapipe.SpectrogramCalculatorOptions.Types.WindowType) }, new pb::Extension[] { global::Mediapipe.SpectrogramCalculatorOptions.Extensions.Ext }, null)
           }));
     }
     #endregion
@@ -95,6 +96,7 @@ namespace Mediapipe {
       windowType_ = other.windowType_;
       outputScale_ = other.outputScale_;
       useLocalTimestamp_ = other.useLocalTimestamp_;
+      fftSize_ = other.fftSize_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -330,7 +332,7 @@ namespace Mediapipe {
     /// If use_local_timestamp is true, the output packet's timestamp is based on
     /// the last sample of the packet and it's inferred from the latest input
     /// packet's timestamp.  If false, the output packet's timestamp is based on
-    /// the cumulative timestamping, which is inferred from the intial input
+    /// the cumulative timestamping, which is inferred from the initial input
     /// timestamp and the cumulative number of samples.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -353,6 +355,37 @@ namespace Mediapipe {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public void ClearUseLocalTimestamp() {
       _hasBits0 &= ~128;
+    }
+
+    /// <summary>Field number for the "fft_size" field.</summary>
+    public const int FftSizeFieldNumber = 9;
+    private readonly static int FftSizeDefaultValue = 0;
+
+    private int fftSize_;
+    /// <summary>
+    /// Defines a fixed FFT size. If set to 0, the FFT size will be determined
+    /// based on the frame duration and sample rate.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int FftSize {
+      get { if ((_hasBits0 & 256) != 0) { return fftSize_; } else { return FftSizeDefaultValue; } }
+      set {
+        _hasBits0 |= 256;
+        fftSize_ = value;
+      }
+    }
+    /// <summary>Gets whether the "fft_size" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasFftSize {
+      get { return (_hasBits0 & 256) != 0; }
+    }
+    /// <summary>Clears the value of the "fft_size" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearFftSize() {
+      _hasBits0 &= ~256;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -378,6 +411,7 @@ namespace Mediapipe {
       if (WindowType != other.WindowType) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(OutputScale, other.OutputScale)) return false;
       if (UseLocalTimestamp != other.UseLocalTimestamp) return false;
+      if (FftSize != other.FftSize) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -393,6 +427,7 @@ namespace Mediapipe {
       if (HasWindowType) hash ^= WindowType.GetHashCode();
       if (HasOutputScale) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(OutputScale);
       if (HasUseLocalTimestamp) hash ^= UseLocalTimestamp.GetHashCode();
+      if (HasFftSize) hash ^= FftSize.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -443,6 +478,10 @@ namespace Mediapipe {
         output.WriteRawTag(64);
         output.WriteBool(UseLocalTimestamp);
       }
+      if (HasFftSize) {
+        output.WriteRawTag(72);
+        output.WriteInt32(FftSize);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -485,6 +524,10 @@ namespace Mediapipe {
         output.WriteRawTag(64);
         output.WriteBool(UseLocalTimestamp);
       }
+      if (HasFftSize) {
+        output.WriteRawTag(72);
+        output.WriteInt32(FftSize);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -518,6 +561,9 @@ namespace Mediapipe {
       }
       if (HasUseLocalTimestamp) {
         size += 1 + 1;
+      }
+      if (HasFftSize) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(FftSize);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -554,6 +600,9 @@ namespace Mediapipe {
       }
       if (other.HasUseLocalTimestamp) {
         UseLocalTimestamp = other.UseLocalTimestamp;
+      }
+      if (other.HasFftSize) {
+        FftSize = other.FftSize;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -600,6 +649,10 @@ namespace Mediapipe {
           }
           case 64: {
             UseLocalTimestamp = input.ReadBool();
+            break;
+          }
+          case 72: {
+            FftSize = input.ReadInt32();
             break;
           }
         }
@@ -649,6 +702,10 @@ namespace Mediapipe {
             UseLocalTimestamp = input.ReadBool();
             break;
           }
+          case 72: {
+            FftSize = input.ReadInt32();
+            break;
+          }
         }
       }
     }
@@ -682,6 +739,9 @@ namespace Mediapipe {
         [pbr::OriginalName("HANN")] Hann = 0,
         [pbr::OriginalName("HAMMING")] Hamming = 1,
         [pbr::OriginalName("COSINE")] Cosine = 2,
+        /// <summary>
+        /// Alias of COSINE.
+        /// </summary>
         [pbr::OriginalName("SQRT_HANN")] SqrtHann = 4,
       }
 

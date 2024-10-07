@@ -18,24 +18,17 @@ namespace Mediapipe.Unity
 {
   public class WebCamSource : ImageSource
   {
-    [Tooltip("For the default resolution, the one whose width is closest to this value will be chosen")]
-    [SerializeField] private int _preferableDefaultWidth = 1280;
+    private readonly int _preferableDefaultWidth = 1280;
 
     private const string _TAG = nameof(WebCamSource);
 
-    [SerializeField]
-    private ResolutionStruct[] _defaultAvailableResolutions = new ResolutionStruct[] {
-      new ResolutionStruct(176, 144, 30),
-      new ResolutionStruct(320, 240, 30),
-      new ResolutionStruct(424, 240, 30),
-      new ResolutionStruct(640, 360, 30),
-      new ResolutionStruct(640, 480, 30),
-      new ResolutionStruct(848, 480, 30),
-      new ResolutionStruct(960, 540, 30),
-      new ResolutionStruct(1280, 720, 30),
-      new ResolutionStruct(1600, 896, 30),
-      new ResolutionStruct(1920, 1080, 30),
-    };
+    private readonly ResolutionStruct[] _defaultAvailableResolutions;
+
+    public WebCamSource(int preferableDefaultWidth, ResolutionStruct[] defaultAvailableResolutions)
+    {
+      _preferableDefaultWidth = preferableDefaultWidth;
+      _defaultAvailableResolutions = defaultAvailableResolutions;
+    }
 
     private static readonly object _PermissionLock = new object();
     private static bool _IsPermitted = false;
@@ -120,15 +113,18 @@ namespace Mediapipe.Unity
 
     public override bool isPrepared => webCamTexture != null;
     public override bool isPlaying => webCamTexture != null && webCamTexture.isPlaying;
-    private bool _isInitialized;
 
-    private IEnumerator Start()
+    private IEnumerator Initialize()
     {
       yield return GetPermission();
 
       if (!_IsPermitted)
       {
-        _isInitialized = true;
+        yield break;
+      }
+
+      if (webCamDevice != null)
+      {
         yield break;
       }
 
@@ -138,8 +134,6 @@ namespace Mediapipe.Unity
       {
         webCamDevice = availableSources[0];
       }
-
-      _isInitialized = true;
     }
 
     private IEnumerator GetPermission()
@@ -166,12 +160,12 @@ namespace Mediapipe.Unity
 #if UNITY_ANDROID
         if (!Permission.HasUserAuthorizedPermission(Permission.Camera))
         {
-          Logger.LogWarning(_TAG, "Not permitted to use Camera");
+          Debug.LogWarning("Not permitted to use Camera");
           yield break;
         }
 #elif UNITY_IOS
         if (!Application.HasUserAuthorization(UserAuthorization.WebCam)) {
-          Logger.LogWarning(_TAG, "Not permitted to use WebCam");
+          Debug.LogWarning("Not permitted to use WebCam");
           yield break;
         }
 #endif
@@ -193,7 +187,7 @@ namespace Mediapipe.Unity
 
     public override IEnumerator Play()
     {
-      yield return new WaitUntil(() => _isInitialized);
+      yield return Initialize();
       if (!_IsPermitted)
       {
         throw new InvalidOperationException("Not permitted to access cameras");
@@ -234,10 +228,7 @@ namespace Mediapipe.Unity
       webCamTexture = null;
     }
 
-    public override Texture GetCurrentTexture()
-    {
-      return webCamTexture;
-    }
+    public override Texture GetCurrentTexture() => webCamTexture;
 
     private ResolutionStruct GetDefaultResolution()
     {
@@ -260,7 +251,7 @@ namespace Mediapipe.Unity
     {
       const int timeoutFrame = 2000;
       var count = 0;
-      Logger.LogVerbose("Waiting for WebCamTexture to start");
+      Debug.Log("Waiting for WebCamTexture to start");
       yield return new WaitUntil(() => count++ > timeoutFrame || webCamTexture.width > 16);
 
       if (webCamTexture.width <= 16)

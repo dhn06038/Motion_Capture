@@ -26,7 +26,8 @@ namespace Mediapipe {
           string.Concat(
             "Ch5tZWRpYXBpcGUvZ3B1L2dwdV9vcmlnaW4ucHJvdG8SCW1lZGlhcGlwZSJA",
             "CglHcHVPcmlnaW4iMwoETW9kZRILCgdERUZBVUxUEAASEAoMQ09OVkVOVElP",
-            "TkFMEAESDAoIVE9QX0xFRlQQAg=="));
+            "TkFMEAESDAoIVE9QX0xFRlQQAkIqChhjb20uZ29vZ2xlLm1lZGlhcGlwZS5n",
+            "cHVCDkdwdU9yaWdpblByb3RvYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
