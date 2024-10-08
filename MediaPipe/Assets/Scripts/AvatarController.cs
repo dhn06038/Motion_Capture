@@ -90,7 +90,7 @@ public class AvatarController : MonoBehaviour
 
     private void UpdateArms(NormalizedLandmarkList poseLandmarks)
     {
-        // 왼쪽 팔 업데이트
+        /*// 왼쪽 팔 업데이트
         Vector3 leftShoulderPos = MediaPipeLandmarkToUnityWorld(poseLandmarks.Landmark[11]);
         Vector3 leftElbowPos = MediaPipeLandmarkToUnityWorld(poseLandmarks.Landmark[13]);
         Vector3 leftWristPos = MediaPipeLandmarkToUnityWorld(poseLandmarks.Landmark[15]);
@@ -98,7 +98,7 @@ public class AvatarController : MonoBehaviour
         UpdateBoneRotation(this.LeftUpperArm, leftShoulderPos, leftElbowPos);
         UpdateBoneRotation(this.LeftLowerArm, leftElbowPos, leftWristPos);
 
-        // 오른쪽 팔 업데이트 (동일한 방식)
+        // 오른쪽 팔 업데이트 (동일한 방식)*/
     }
 
     private void UpdateHands(NormalizedLandmarkList leftHandLandmarks, NormalizedLandmarkList rightHandLandmarks)
@@ -115,34 +115,67 @@ public class AvatarController : MonoBehaviour
 
     private void UpdateLeftHand(NormalizedLandmarkList handLandmarks)
     {
-        // 손가락 본 업데이트
-        // 엄지손가락
-        Vector3 thumbCMC = MediaPipeLandmarkToUnityWorld(handLandmarks.Landmark[1]);
-        Vector3 thumbMCP = MediaPipeLandmarkToUnityWorld(handLandmarks.Landmark[2]);
-        Vector3 thumbIP = MediaPipeLandmarkToUnityWorld(handLandmarks.Landmark[3]);
-        Vector3 thumbTip = MediaPipeLandmarkToUnityWorld(handLandmarks.Landmark[4]);
+        // 엄지손가락 업데이트
+        UpdateFinger(
+        handLandmarks,
+        this.LeftThumb1, this.LeftThumb2, this.LeftThumb3, this.LeftThumb4,
+        1, 2, 3, 4);
 
-        UpdateBoneRotation(this.LeftThumb1, thumbCMC, thumbMCP);
-        UpdateBoneRotation(this.LeftThumb2, thumbMCP, thumbIP);
-        UpdateBoneRotation(this.LeftThumb3, thumbIP, thumbTip);
+        // 검지손가락 업데이트
+        UpdateFinger(
+            handLandmarks,
+            this.LeftIndex1, this.LeftIndex2, this.LeftIndex3, this.LeftIndex4,
+            5, 6, 7, 8);
 
-        // 다른 손가락들도 업데이트
+        // 중지손가락 업데이트
+        UpdateFinger(
+            handLandmarks,
+            this.LeftMiddle1, this.LeftMiddle2, this.LeftMiddle3, this.LeftMiddle4,
+            9, 10, 11, 12);
+
+        // 약지손가락 업데이트
+        UpdateFinger(
+            handLandmarks,
+            this.LeftRing1, this.LeftRing2, this.LeftRing3, this.LeftRing4,
+            13, 14, 15, 16);
+
+        // 새끼손가락 업데이트
+        UpdateFinger(
+            handLandmarks,
+            this.LeftPinky1, this.LeftPinky2, this.LeftPinky3, this.LeftPinky4,
+            17, 18, 19, 20);
     }
 
     private void UpdateRightHand(NormalizedLandmarkList handLandmarks)
     {
         // 손가락 본 업데이트
         // 엄지손가락
-        Vector3 thumbCMC = MediaPipeLandmarkToUnityWorld(handLandmarks.Landmark[1]);
-        Vector3 thumbMCP = MediaPipeLandmarkToUnityWorld(handLandmarks.Landmark[2]);
-        Vector3 thumbIP = MediaPipeLandmarkToUnityWorld(handLandmarks.Landmark[3]);
-        Vector3 thumbTip = MediaPipeLandmarkToUnityWorld(handLandmarks.Landmark[4]);
+    }
+    private void UpdateFinger(
+    NormalizedLandmarkList handLandmarks,
+    Transform bone1, Transform bone2, Transform bone3, Transform boneEnd,
+    int index1, int index2, int index3, int indexTip)
+    {
+        Vector3 point1 = GetWorldPosition(handLandmarks.Landmark[index1]);
+        Vector3 point2 = GetWorldPosition(handLandmarks.Landmark[index2]);
+        Vector3 point3 = GetWorldPosition(handLandmarks.Landmark[index3]);
+        Vector3 pointTip = GetWorldPosition(handLandmarks.Landmark[indexTip]);
 
-        UpdateBoneRotation(this.LeftThumb1, thumbCMC, thumbMCP);
-        UpdateBoneRotation(this.LeftThumb2, thumbMCP, thumbIP);
-        UpdateBoneRotation(this.LeftThumb3, thumbIP, thumbTip);
+        // Bone1: Joint1 -> Joint2
+        UpdateBoneRotation(bone1, point1, point2);
 
-        // 다른 손가락들도 업데이트
+        // Bone2: Joint2 -> Joint3
+        UpdateBoneRotation(bone2, point2, point3);
+
+        // Bone3: Joint3 -> Tip
+        UpdateBoneRotation(bone3, point3, pointTip);
+
+        float lengthFactor = (pointTip - point3).magnitude;
+
+        // BoneEnd: Tip -> Extended Point
+        Vector3 direction = (pointTip - point3).normalized;
+        Vector3 endPoint = pointTip + direction * lengthFactor;
+        UpdateBoneRotation(boneEnd, pointTip, endPoint);
     }
 
     private void UpdateFace(NormalizedLandmarkList faceLandmarks)
@@ -153,7 +186,7 @@ public class AvatarController : MonoBehaviour
 
     private void UpdateLegs(NormalizedLandmarkList poseLandmarks)
     {
-        // 다리 본 업데이트
+        /*// 다리 본 업데이트
         // 왼쪽 다리
         Vector3 leftHipPos = MediaPipeLandmarkToUnityWorld(poseLandmarks.Landmark[23]);
         Vector3 leftKneePos = MediaPipeLandmarkToUnityWorld(poseLandmarks.Landmark[25]);
@@ -162,7 +195,16 @@ public class AvatarController : MonoBehaviour
         UpdateBoneRotation(this.LeftUpperLeg, leftHipPos, leftKneePos);
         UpdateBoneRotation(this.LeftLowerLeg, leftKneePos, leftAnklePos);
 
-        // 오른쪽 다리 업데이트 (동일한 방식)
+        // 오른쪽 다리 업데이트 (동일한 방식)*/
+    }
+
+    private Vector3 GetWorldPosition(NormalizedLandmark landmark)
+    {
+        // MediaPipe 좌표계를 유니티 월드 좌표계로 변환하는 함수
+        float x = (landmark.X - 0.5f) * widthScale;
+        float y = (0.5f - landmark.Y) * heightScale; // y축 반전
+        float z = -landmark.Z * depthScale;
+        return new Vector3(x, y, z);
     }
 
     private Vector3 MediaPipeLandmarkToUnityWorld(NormalizedLandmark landmark)

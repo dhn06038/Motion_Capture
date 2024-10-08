@@ -21,11 +21,19 @@ namespace Mediapipe.Unity.Sample.Holistic
 
     private Experimental.TextureFramePool _textureFramePool;
 
+    public AvatarController avatarController;
+
+
     public HolisticTrackingGraph.ModelComplexity modelComplexity
     {
       get => graphRunner.modelComplexity;
       set => graphRunner.modelComplexity = value;
     }
+
+    private NormalizedLandmarkList poseLandmarks;
+    private NormalizedLandmarkList leftHandLandmarks;
+    private NormalizedLandmarkList rightHandLandmarks;
+    private NormalizedLandmarkList faceLandmarks;
 
     public bool smoothLandmarks
     {
@@ -183,30 +191,46 @@ namespace Mediapipe.Unity.Sample.Holistic
       var packet = eventArgs.packet;
       var value = packet == null ? default : packet.Get(NormalizedLandmarkList.Parser);
       _holisticAnnotationController.DrawFaceLandmarkListLater(value);
-    }
+      faceLandmarks = eventArgs.packet?.Get(NormalizedLandmarkList.Parser);
+      UpdateAvatar();
+     }
 
     private void OnPoseLandmarksOutput(object stream, OutputStream<NormalizedLandmarkList>.OutputEventArgs eventArgs)
     {
       var packet = eventArgs.packet;
       var value = packet == null ? default : packet.Get(NormalizedLandmarkList.Parser);
       _holisticAnnotationController.DrawPoseLandmarkListLater(value);
-    }
+      poseLandmarks = eventArgs.packet?.Get(NormalizedLandmarkList.Parser);
+      UpdateAvatar();
+     }
 
     private void OnLeftHandLandmarksOutput(object stream, OutputStream<NormalizedLandmarkList>.OutputEventArgs eventArgs)
     {
       var packet = eventArgs.packet;
       var value = packet == null ? default : packet.Get(NormalizedLandmarkList.Parser);
       _holisticAnnotationController.DrawLeftHandLandmarkListLater(value);
-    }
+      leftHandLandmarks = eventArgs.packet?.Get(NormalizedLandmarkList.Parser);
+      UpdateAvatar();
+     }
 
     private void OnRightHandLandmarksOutput(object stream, OutputStream<NormalizedLandmarkList>.OutputEventArgs eventArgs)
     {
       var packet = eventArgs.packet;
       var value = packet == null ? default : packet.Get(NormalizedLandmarkList.Parser);
       _holisticAnnotationController.DrawRightHandLandmarkListLater(value);
+      rightHandLandmarks = eventArgs.packet?.Get(NormalizedLandmarkList.Parser);
+      UpdateAvatar();
+     }
+
+    private void UpdateAvatar()
+    {
+        if (avatarController != null && poseLandmarks != null)
+        {
+                avatarController.UpdateAvatar(poseLandmarks, leftHandLandmarks, rightHandLandmarks, faceLandmarks);
+        }
     }
 
-    private void OnPoseWorldLandmarksOutput(object stream, OutputStream<LandmarkList>.OutputEventArgs eventArgs)
+        private void OnPoseWorldLandmarksOutput(object stream, OutputStream<LandmarkList>.OutputEventArgs eventArgs)
     {
       var packet = eventArgs.packet;
       var value = packet == null ? default : packet.Get(LandmarkList.Parser);
