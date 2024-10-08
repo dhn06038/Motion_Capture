@@ -90,7 +90,7 @@ public class AvatarController : MonoBehaviour
 
     private void UpdateArms(NormalizedLandmarkList poseLandmarks)
     {
-        /*// 왼쪽 팔 업데이트
+        // 왼쪽 팔 업데이트
         Vector3 leftShoulderPos = MediaPipeLandmarkToUnityWorld(poseLandmarks.Landmark[11]);
         Vector3 leftElbowPos = MediaPipeLandmarkToUnityWorld(poseLandmarks.Landmark[13]);
         Vector3 leftWristPos = MediaPipeLandmarkToUnityWorld(poseLandmarks.Landmark[15]);
@@ -98,7 +98,7 @@ public class AvatarController : MonoBehaviour
         UpdateBoneRotation(this.LeftUpperArm, leftShoulderPos, leftElbowPos);
         UpdateBoneRotation(this.LeftLowerArm, leftElbowPos, leftWristPos);
 
-        // 오른쪽 팔 업데이트 (동일한 방식)*/
+        // 오른쪽 팔 업데이트 (동일한 방식)
     }
 
     private void UpdateHands(NormalizedLandmarkList leftHandLandmarks, NormalizedLandmarkList rightHandLandmarks)
@@ -200,7 +200,11 @@ public class AvatarController : MonoBehaviour
 
     private Vector3 GetWorldPosition(NormalizedLandmark landmark)
     {
-        // MediaPipe 좌표계를 유니티 월드 좌표계로 변환하는 함수
+        if (landmark == null)
+        {
+            return Vector3.zero;
+        }
+
         float x = (landmark.X - 0.5f) * widthScale;
         float y = (0.5f - landmark.Y) * heightScale; // y축 반전
         float z = -landmark.Z * depthScale;

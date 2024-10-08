@@ -5,6 +5,7 @@
 // https://opensource.org/licenses/MIT.
 
 using System.Collections;
+using System.Collections.Concurrent;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -20,6 +21,8 @@ namespace Mediapipe.Unity.Sample.Holistic
     [SerializeField] private NormalizedRectAnnotationController _poseRoiAnnotationController;
 
     private Experimental.TextureFramePool _textureFramePool;
+
+    private ConcurrentQueue<System.Action> mainThreadActions = new ConcurrentQueue<System.Action>();
 
     public AvatarController avatarController;
 
@@ -224,11 +227,15 @@ namespace Mediapipe.Unity.Sample.Holistic
 
     private void UpdateAvatar()
     {
-        if (avatarController != null && poseLandmarks != null)
-        {
-                avatarController.UpdateAvatar(poseLandmarks, leftHandLandmarks, rightHandLandmarks, faceLandmarks);
+            mainThreadActions.Enqueue(() =>
+            {
+                if (avatarController != null && poseLandmarks != null)
+                {
+                    avatarController.UpdateAvatar(poseLandmarks, leftHandLandmarks, rightHandLandmarks, faceLandmarks);
+                }
+            });
         }
-    }
+
 
         private void OnPoseWorldLandmarksOutput(object stream, OutputStream<LandmarkList>.OutputEventArgs eventArgs)
     {
@@ -251,5 +258,13 @@ namespace Mediapipe.Unity.Sample.Holistic
       var value = packet == null ? default : packet.Get(NormalizedRect.Parser);
       _poseRoiAnnotationController.DrawLater(value);
     }
-  }
+        void Update()
+        {
+            // 메인 스레드에서 작업 큐 처리
+            while (mainThreadActions.TryDequeue(out var action))
+            {
+                action.Invoke();
+            }
+        }
+    }
 }
