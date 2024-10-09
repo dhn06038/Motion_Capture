@@ -1,6 +1,6 @@
 # Motion_Capture
 
-[Notion Link](https://paint-chinchilla-3cb.notion.site/Motion-Capture-63f430d4f2af41d283428167c30c5a70)
+ This project demonstrates a cost-effective motion capture system using a webcam and Python libraries. It showcases the implementation of hand tracking, pose estimation, and facial landmark detection, with real-time visualization and avatar animation in Unity.
 
 ## Advantages of Using a Webcam for Motion Capture:
 
@@ -25,6 +25,8 @@
 - **Accuracy**: Webcams lack the precision and detailed tracking provided by expensive systems. They are generally limited in terms of capturing fine movements (e.g., finger or subtle facial motions).
 - **Latency and Frame Rate**: Higher-end systems offer higher frame rates and lower latency, which is important for real-time applications.
 - **Depth Perception**: Webcams lack depth sensors, unlike advanced mocap cameras that use infrared or other techniques to capture 3D motion data accurately.
+
+# Implementation Highlights
 
 ## 1. Hand Tracking
 
@@ -56,3 +58,13 @@ Unity (2022.3.24f1)
 ## Python Library
 
 OpenCV, MediaPipe for pose detection, hand tracking, facial capture
+
+## Future Improvements
+
+- It will be modified to receive motion capture data directly within Unity using the MediaPipe Plug-in.
+  
+- Enhance facial expression recognition for more realistic avatar emotions.
+  
+- Improve avatar animation smoothing and interpolation.
+  
+- **In Progress**: The project is ongoing with plans to integrate with **VirtualLiveStage**, creating a unified system for real-time virtual performance control.
