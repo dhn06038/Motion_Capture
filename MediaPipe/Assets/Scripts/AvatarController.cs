@@ -213,9 +213,14 @@ public class AvatarController : MonoBehaviour
 
     private Vector3 MediaPipeLandmarkToUnityWorld(NormalizedLandmark landmark)
     {
-        float x = (landmark.X - 0.5f) * widthScale;
-        float y = (landmark.Y - 0.5f) * heightScale;
-        float z = -landmark.Z * depthScale;
+        if (landmark == null)
+        {
+            return Vector3.zero;
+        }
+
+        float x = landmark.X * widthScale;
+        float y = landmark.Y * heightScale; // y√‡ π›¿¸
+        float z = landmark.Z * depthScale;
         return new Vector3(x, y, z);
     }
 
