@@ -106,11 +106,12 @@ public class MotionCaptureAvatar : MonoBehaviour
         for (int i = 0; i < 33; i++)
         {
 
-            float x = 7 - float.Parse(points[i * 3]) / 100;
+            float x = -float.Parse(points[i * 3]) / 100;
             float y = float.Parse(points[i * 3 + 1]) / 100;
             float z = -float.Parse(points[i * 3 + 2]) / 100;
 
             poseLandmarks[i] = new Vector3(x, y, z);
+            print(poseLandmarks[i]);
         }
 
 
@@ -136,11 +137,11 @@ public class MotionCaptureAvatar : MonoBehaviour
         now_pos[15] = poseLandmarks[14];  // RightLowerArm
         now_pos[16] = poseLandmarks[16];  // RightHand
 
-        /*for (int i = 0; i < 16; i++)
+        for (int i = 0; i < 17; i++)
         {
             now_pos[i] = SmoothValue(now_pos[i], previous_pos[i], 0.1f);  // 보간
             previous_pos[i] = now_pos[i];  // 현재 프레임 값을 이전 프레임 배열에 저장
-        }*/
+        }
 
         Vector3 pos_forward = TriangleNormal(now_pos[7], now_pos[4], now_pos[1]);
         bone_t[0].position = now_pos[0] * scale_ratio + new Vector3(init_position.x, heal_position, init_position.z);
