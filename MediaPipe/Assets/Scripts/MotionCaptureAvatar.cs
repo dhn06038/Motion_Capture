@@ -25,6 +25,7 @@ public class MotionCaptureAvatar : MonoBehaviour
     Quaternion[] init_inv;
 
     Vector3[] now_pos = new Vector3[17];
+    Vector3[] previous_pos = new Vector3[17];
 
     int[] bones = new int[10] { 1, 2, 4, 5, 7, 8, 11, 12, 14, 15 };
     int[] child_bones = new int[10] { 2, 3, 5, 6, 8, 10, 12, 13, 15, 16 };
@@ -85,6 +86,11 @@ public class MotionCaptureAvatar : MonoBehaviour
         return dd;
     }
 
+    Vector3 SmoothValue(Vector3 current, Vector3 previous, float smoothingFactor)
+    {
+        return Vector3.Lerp(previous, current, smoothingFactor);
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -130,6 +136,12 @@ public class MotionCaptureAvatar : MonoBehaviour
         now_pos[14] = poseLandmarks[12];  // RightUpperArm
         now_pos[15] = poseLandmarks[14];  // RightLowerArm
         now_pos[16] = poseLandmarks[16];  // RightHand
+
+        for (int i = 0; i < 17; i++)
+        {
+            now_pos[i] = SmoothValue(now_pos[i], previous_pos[i], 0.1f);  // 보간
+            previous_pos[i] = now_pos[i];  // 현재 프레임 값을 이전 프레임 배열에 저장
+        }
 
         Vector3 pos_forward = TriangleNormal(now_pos[7], now_pos[4], now_pos[1]);
         bone_t[0].position = now_pos[0] * scale_ratio + new Vector3(init_position.x, heal_position, init_position.z);
