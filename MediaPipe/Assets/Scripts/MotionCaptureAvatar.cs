@@ -100,7 +100,7 @@ public class MotionCaptureAvatar : MonoBehaviour
         for (int i = 0; i < 33; i++)
         {
 
-            float x = 7 - float.Parse(points[i * 3]) / 100;
+            float x = -float.Parse(points[i * 3]) / 100;
             float y = float.Parse(points[i * 3 + 1]) / 100;
             float z = -float.Parse(points[i * 3 + 2]) / 100;
 
