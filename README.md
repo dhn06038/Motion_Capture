@@ -49,6 +49,10 @@
 
   <img src="https://github.com/user-attachments/assets/4b89fc99-aef1-41e1-9371-4123a305422b" width="80%" height="45%"/>
 
+   To fix the jittery motion, applied a low-pass filter to smooth the avatar’s movements. The filter works by blending the current and previous values, reducing sudden changes and making the motion more fluid. This helps achieve smoother, more natural animations.
+
+   <img src="https://github.com/user-attachments/assets/3e1dbb56-c05a-4c68-ab9a-87c3f8f1a4aa" width="80%" height="45%"/>
+
 ## Development Environment
 
 Pycharm (2024.2.1)
