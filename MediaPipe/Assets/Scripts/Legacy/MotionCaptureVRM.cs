@@ -60,9 +60,9 @@ public class MotionCaptureVRM : MonoBehaviour
         bone_t[15] = anim.GetBoneTransform(HumanBodyBones.RightLowerArm);
         bone_t[16] = anim.GetBoneTransform(HumanBodyBones.RightHand);
 
-        print(bone_t[0]);
-        Vector3 init_forward = TriangleNormal(bone_t[7].position, bone_t[4].position, bone_t[1].position);
+        Vector3 init_forward = TriangleNormal(bone_t[10].position, bone_t[11].position, bone_t[14].position);
         init_inv[0] = Quaternion.Inverse(Quaternion.LookRotation(init_forward));
+        Debug.DrawRay(bone_t[0].position, init_forward * 2.0f, Color.red);
 
         init_position = bone_t[0].position;
         init_rot[0] = bone_t[0].rotation;
@@ -92,7 +92,6 @@ public class MotionCaptureVRM : MonoBehaviour
         return Vector3.Lerp(previous, current, smoothingFactor);
     }
 
-    // Update is called once per frame
     void Update()
     {
         string data = PoseudpReceive.data;
@@ -124,6 +123,13 @@ public class MotionCaptureVRM : MonoBehaviour
             now_pos[4] = poseLandmarks[23];  // LeftUpperLeg
             now_pos[5] = poseLandmarks[25];  // LeftLowerLeg
             now_pos[6] = poseLandmarks[27];  // LeftFoot
+        }
+        else
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                now_pos[i] = bone_t[i].position;
+            }
         }
         // Spine
         now_pos[7] = ((poseLandmarks[11] + poseLandmarks[12]) * 0.5f + now_pos[0]) * 0.5f;  // Spine
