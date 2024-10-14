@@ -62,7 +62,6 @@ public class MotionCaptureVRM : MonoBehaviour
 
         Vector3 init_forward = TriangleNormal(bone_t[10].position, bone_t[11].position, bone_t[14].position);
         init_inv[0] = Quaternion.Inverse(Quaternion.LookRotation(init_forward));
-        Debug.DrawRay(bone_t[0].position, init_forward * 2.0f, Color.red);
 
         init_position = bone_t[0].position;
         init_rot[0] = bone_t[0].rotation;
