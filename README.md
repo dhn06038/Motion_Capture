@@ -1,6 +1,6 @@
 # Motion_Capture
 
- This project demonstrates a cost-effective motion capture system using a webcam and Python libraries. It showcases the implementation of hand tracking, pose estimation, and facial landmark detection, with real-time visualization and avatar animation in Unity.
+ This project demonstrates a cost-effective motion capture system using single webcam and Python libraries. It showcases the implementation of hand tracking, pose estimation, and facial landmark detection, with real-time visualization and avatar animation in Unity.
 
 ## Advantages of Using a Webcam for Motion Capture:
 
