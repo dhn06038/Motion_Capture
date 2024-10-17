@@ -10,7 +10,7 @@ public class MotionCaptureVRM : MonoBehaviour
     public bool enableLeg = false;
 
     float scale_ratio = 0.001f;
-    float heal_position = 0.05f; 
+    float heel_position = 0.05f; 
     float head_angle = 15f;
 
     Vector3[] poseLandmarks = new Vector3[33];
@@ -30,6 +30,8 @@ public class MotionCaptureVRM : MonoBehaviour
 
     int[] bones = new int[10] { 1, 2, 4, 5, 7, 8, 11, 12, 14, 15 };
     int[] child_bones = new int[10] { 2, 3, 5, 6, 8, 10, 12, 13, 15, 16 };
+
+    int[] leg_bones = new int[] { 1, 2, 3, 4, 5, 6 };
     void Start()
     {
         anim = GetComponent<Animator>();
@@ -101,17 +103,24 @@ public class MotionCaptureVRM : MonoBehaviour
 
         //0        1*3      2*3
         //x1,y1,z1,x2,y2,z2,x3,y3,z3
-
-        for (int i = 0; i < 33; i++)
+        if (points.Length >= 99)
         {
+            for (int i = 0; i < 33; i++)
+            {
 
-            float x = 7-float.Parse(points[i * 3]) / 100;
-            float y = float.Parse(points[i * 3 + 1]) / 100;
-            float z = -float.Parse(points[i * 3 + 2]) / 100;
+                float x = 7 - float.Parse(points[i * 3]) / 100;
+                float y = float.Parse(points[i * 3 + 1]) / 100;
+                float z = -float.Parse(points[i * 3 + 2]) / 100;
 
-            poseLandmarks[i] = new Vector3(x, y, z);
-            print(poseLandmarks[i]);
+                poseLandmarks[i] = new Vector3(x, y, z);
+            }
         }
+        else
+        {
+            Debug.LogWarning("Received data is incomplete.");
+        }
+
+
 
         if (enableLeg)
         {
@@ -130,12 +139,8 @@ public class MotionCaptureVRM : MonoBehaviour
                 now_pos[i] = bone_t[i].position;
             }
         }
-        // Spine
         now_pos[7] = ((poseLandmarks[11] + poseLandmarks[12]) * 0.5f + now_pos[0]) * 0.5f;  // Spine
-
-        // Neck
         now_pos[8] = (poseLandmarks[0] + (poseLandmarks[11] + poseLandmarks[12]) * 0.5f) * 0.5f;  // Neck
-
         now_pos[10] = poseLandmarks[0];  // Head
         now_pos[11] = poseLandmarks[11];  // LeftUpperArm
         now_pos[12] = poseLandmarks[13];  // LeftLowerArm
@@ -150,17 +155,23 @@ public class MotionCaptureVRM : MonoBehaviour
             previous_pos[i] = now_pos[i];  // 현재 프레임 값을 이전 프레임 배열에 저장
         }
 
-        Vector3 pos_forward = TriangleNormal(now_pos[7], now_pos[4], now_pos[1]);
-        bone_t[0].position = now_pos[0] * scale_ratio + new Vector3(init_position.x, heal_position, init_position.z);
+        Vector3 pos_forward = TriangleNormal(now_pos[10], now_pos[11], now_pos[14]);
+
+        bone_t[0].position = now_pos[0] * scale_ratio + new Vector3(init_position.x, heel_position, init_position.z);
         bone_t[0].rotation = Quaternion.LookRotation(pos_forward) * init_inv[0] * init_rot[0];
-        
+
+
         for (int i = 0; i < bones.Length; i++)
         {
             int b = bones[i];
             int cb = child_bones[i];
+            if (!enableLeg && System.Array.IndexOf(leg_bones, b) >= 0)
+            {
+                continue;
+            }
             bone_t[b].rotation = Quaternion.LookRotation(now_pos[b] - now_pos[cb], pos_forward) * init_inv[b] * init_rot[b];
         }
-
+        
         bone_t[8].rotation = Quaternion.AngleAxis(head_angle, bone_t[11].position - bone_t[14].position) * bone_t[8].rotation;
     }
 }
