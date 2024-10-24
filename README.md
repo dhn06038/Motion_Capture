@@ -69,6 +69,6 @@ OpenCV, MediaPipe for pose detection, hand tracking, facial capture
   
 - Enhance facial expression recognition for more realistic avatar emotions.
   
-- Improve avatar animation smoothing and interpolation.
+- Improve avatar animation smoothing and interpolation. Especially, planning to implement animation using IK method.
   
 - **In Progress**: The project is ongoing with plans to integrate with **VirtualLiveStage**, creating a unified system for real-time virtual performance control.
